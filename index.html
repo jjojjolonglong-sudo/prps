@@ -201,8 +201,8 @@ td.full{animation:full .45s ease-out}
   /* ── 한국 시간 ── */
   const two = n => String(n).padStart(2, '0');
   const kp = t => { const d = new Date(new Date(t).getTime() + 32400000);
-    return {Y:d.getUTCFullYear(), M:two(d.getUTCMonth()+1), D:two(d.getUTCDate()), h:two(d.getUTCHours()), m:two(d.getUTCMinutes())}; };
-  const fname = t => { const p = kp(t); return `${p.Y}${p.M}${p.D}-${p.h}${p.m}`; };       // 파일명 = 시각
+    return {Y:d.getUTCFullYear(), M:two(d.getUTCMonth()+1), D:two(d.getUTCDate()), h:two(d.getUTCHours()), m:two(d.getUTCMinutes()), s:two(d.getUTCSeconds())}; };
+  const fname = t => { const p = kp(t); return `${p.Y}${p.M}${p.D}_${p.h}${p.m}${p.s}`; };   // 파일명 = 날짜_시각 (예: 20261118_230205)
   const fmt = t => { const p = kp(t); return `${p.Y}.${p.M}.${p.D} ${p.h}:${p.m}`; };
   const hm = t => { const p = kp(t); return `${p.h}:${p.m}`; };
 
@@ -299,6 +299,7 @@ td.full{animation:full .45s ease-out}
   function loadDoc(d, keepScroll){
     doc = d;
     KEYS.forEach(k => ed[k].value = d[k] || '');
+    document.title = fname(d.created_at);   // 탭 이름·PDF 파일명 = 기획서를 만든 날짜_시각
     showName(); growAll(); refreshStatus(); lsS('cur', d.id);
     if (!keepScroll) $('#scroll').scrollTop = 0;
   }
@@ -357,19 +358,15 @@ td.full{animation:full .45s ease-out}
     docs = docs.filter(d => d.id !== id); dirty.delete(id);
     doc = null; openStart(); cache();
   };
-  $('#bPrint').onclick = () => {
-    const t = document.title;
-    document.title = fname(doc.created_at);     // PDF 파일명 = 기획서를 만든 시각
-    window.print();
-    setTimeout(() => document.title = t, 500);
-  };
+  $('#bPrint').onclick = () => window.print();
+  addEventListener('beforeprint', () => { if (doc) document.title = fname(doc.created_at); });   // Ctrl+P로 인쇄해도 같은 파일명
   $('#bRefresh').onclick = async () => { if (dirty.size) await push(); location.reload(); };
 
   /* 내보내기 · 가져오기 */
   $('#bExport').onclick = () => {
     const body = JSON.stringify({app:'prps', version:2, exported: now(), docs: recent().map(row)}, null, 2);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], {type:'application/json'}));
-    a.download = `prps-${fname(Date.now())}.json`;   // 파일명 = 내보낸 시각
+    a.download = `${fname(Date.now())}.json`;   // 파일명 = 내보낸 날짜_시각
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
   };
   $('#bImport').onclick = () => $('#fileIn').click();
