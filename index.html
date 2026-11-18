@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>PRPS</title>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/fonts.v1.js" data-app="prps"></script>
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" type="image/png" href="icon-192.png"><link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#f6f8fa"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="PRPS">
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/config.js"></script>
+<script src="https://jjojjolonglong-sudo.github.io/mnmn/core.v1.js" data-app="prps"></script>
+<style>
+/* PRPS — 단편 소설 기획서. 한글 양식 그대로 A4 한 장. 차가운 회색·옅은 푸른색, 각진 모서리, 1px 선 */
+:root{
+  --ink:#1b1f24; --line:#000; --muted:#7a8591; --bg:#e9edf1; --side:#f6f8fa; --edge:#d5dbe1;
+  --accent:#3d6a9a; --warn:#c0392b; --head:#f3f4f5; --ph:#c8cfd6;
+  --fs:13px; --lh:20px; --tbl:680px; --lab:76px; --cola:222px; --pageh:1122px;
+}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overscroll-behavior:none}
+body{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto Sans KR",sans-serif;color:var(--ink);background:var(--bg);overflow:hidden;-webkit-text-size-adjust:100%}
+button{font:inherit;color:inherit;border-radius:0}
+[hidden]{display:none!important}
+
+/* ── 로그인 ── */
+#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
+#login form{width:300px;max-width:100%;background:#fff;border:1px solid #c3ccd5;padding:28px 24px}
+#login .brand{text-align:center;padding:0 0 20px}
+#login label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
+#login input{width:100%;padding:8px 9px;border:1px solid #cfd6dd;font:inherit;font-size:14px;outline:0;border-radius:0}
+#login input:focus{border-color:var(--accent)}
+#login button{width:100%;margin-top:18px;padding:9px;background:var(--ink);color:#fff;border:0;font-size:14px;cursor:pointer}
+#login button:disabled{opacity:.5}
+#lmsg{margin:10px 0 0;font-size:12px;line-height:18px;color:var(--warn)}
+#lmsg:empty{display:none}
+
+/* ── 앱 ── */
+#app{display:flex;height:100vh;height:100dvh}
+
+/* 좌측: 정보 + 메뉴 */
+#side{width:150px;flex:none;background:var(--side);border-right:1px solid var(--edge);display:flex;flex-direction:column;padding:16px 12px 48px}
+.brand{font-weight:700;font-size:18px;letter-spacing:.16em;line-height:22px}
+.info{display:flex;flex-direction:column;align-items:flex-start}
+#docname{margin-top:12px;font-size:13px;line-height:18px;font-weight:600;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;width:100%}
+#docname.none{color:var(--muted);font-weight:400}
+#status{margin-top:4px;font-size:11px;line-height:16px;color:var(--muted);white-space:nowrap}
+#status.warn{color:var(--warn)}
+.iconbtn{width:30px;height:30px;flex:none;display:grid;place-items:center;background:#fff;border:1px solid #cfd6dd;padding:0;cursor:pointer;margin-top:10px}
+.iconbtn:hover{border-color:var(--accent);color:var(--accent)}
+.menu{display:flex;flex-direction:column;gap:6px;margin-top:24px}
+.sb{display:block;width:100%;text-align:left;background:#fff;border:1px solid #cfd6dd;padding:8px 10px;font-size:13px;line-height:18px;cursor:pointer;white-space:nowrap}
+.sb:hover{border-color:var(--accent);color:var(--accent)}
+.sb.danger:hover{border-color:var(--warn);color:var(--warn)}
+.spacer{flex:1}
+.foot{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
+.tb{background:none;border:0;padding:3px 0;font-size:12px;color:var(--muted);cursor:pointer}
+.tb:hover{color:var(--accent)}
+
+/* 본문: A4 한 장 */
+#scroll{flex:1;min-width:0;overflow:auto;overscroll-behavior:none;padding:24px 16px 48px}
+.paper{width:794px;height:var(--pageh);margin:0 auto;padding:0 57px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.12);display:flex;flex-direction:column;justify-content:center}
+
+/* 양식 표 */
+.sheet{width:var(--tbl);border-collapse:collapse;table-layout:fixed;font-size:var(--fs);line-height:var(--lh)}
+.sheet col.c-lab{width:var(--lab)}
+.sheet col.c-a{width:var(--cola)}
+.sheet td{border:1px solid var(--line);padding:5px 8px;vertical-align:top}
+.sheet td.lab{text-align:center;padding:5px 4px;white-space:nowrap}
+.sheet td.name{padding:5px 4px}
+.sheet td.head{text-align:center;vertical-align:middle;height:30px;padding:0 8px;background:var(--head);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.fld{display:block;width:100%;margin:0;padding:0;border:0;outline:0;background:transparent;color:inherit;
+  font:inherit;line-height:var(--lh);resize:none;overflow:hidden;
+  white-space:pre-wrap;word-break:keep-all;overflow-wrap:anywhere;
+  min-height:calc(var(--r) * var(--lh));height:calc(var(--r) * var(--lh))}
+.fld.center{text-align:center}
+.fld::placeholder{color:var(--ph);font-style:italic;opacity:1}
+td.full{animation:full .45s ease-out}
+@keyframes full{from{background:#fbe3e0}to{background:transparent}}
+
+/* 줄 수 재기용 숨은 사본 (항상 A4 폭) */
+.measure{position:absolute;left:-10000px;top:0;visibility:hidden;pointer-events:none}
+.measure .fld{height:auto;min-height:0}
+
+/* 목록 팝업 */
+.modal{position:fixed;inset:0;background:rgba(20,28,36,.35);display:flex;align-items:center;justify-content:center;padding:16px;z-index:10}
+.mbox{width:420px;max-width:100%;max-height:80vh;max-height:80dvh;background:#fff;border:1px solid #c3ccd5;display:flex;flex-direction:column}
+.mhead{display:flex;align-items:baseline;gap:8px;padding:14px 16px 10px;font-weight:600;font-size:14px}
+.mhead span{font-weight:400;font-size:12px;color:var(--muted)}
+#q{margin:0 16px 10px;padding:7px 9px;border:1px solid #cfd6dd;font:inherit;font-size:13px;outline:0;border-radius:0}
+#q:focus{border-color:var(--accent)}
+#list{list-style:none;margin:0;padding:0;overflow:auto;overscroll-behavior:contain;flex:1;border-top:1px solid var(--edge)}
+#list li{padding:9px 16px 9px 13px;border-bottom:1px solid #edf0f3;border-left:3px solid transparent;cursor:pointer}
+#list li:hover{background:#f3f6f9}
+#list li.cur{border-left-color:var(--accent);background:#eef3f8}
+#list .t{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#list .m{font-size:11px;color:var(--muted);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#list .empty{color:var(--muted);font-size:13px;cursor:default;text-align:center;padding:24px;border-left:0}
+#list .empty:hover{background:none}
+.mclose{flex:none;border:0;border-top:1px solid var(--edge);background:var(--side);padding:12px;font-size:13px;cursor:pointer}
+.mclose:hover{color:var(--accent)}
+
+/* 모바일: 위에 정보 한 줄 + 메뉴 버튼 */
+@media screen and (max-width:760px){
+  #app{flex-direction:column}
+  #side{width:auto;flex-direction:row;flex-wrap:wrap;align-items:center;gap:5px;padding:8px 10px;border-right:0;border-bottom:1px solid var(--edge)}
+  .info{flex:0 0 100%;flex-direction:row;align-items:center;gap:10px;margin-bottom:4px}
+  .brand{font-size:15px}
+  #docname{margin:0;flex:1;min-width:0;width:auto;-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis;display:block}
+  #status{margin:0}
+  .iconbtn{margin:0}
+  .menu,.foot{display:contents}
+  .spacer{display:none}
+  .sb{width:auto;flex:none;padding:5px 9px;font-size:12px}
+  .tb{padding:5px 4px}
+  #scroll{padding:10px 8px 48px}
+  .paper{width:auto;height:auto;padding:14px 10px;display:block}
+  .sheet.live{width:100%}
+  .sheet.live col.c-lab{width:54px}
+  .sheet.live col.c-a{width:auto}
+  .sheet.live td{padding:5px 6px}
+  .sheet.live td.lab,.sheet.live td.name{padding:5px 2px;white-space:normal;word-break:keep-all}
+}
+
+/* 인쇄 / PDF: A4 한 장, 위아래 여백 같게 */
+@media print{
+  @page{size:A4;margin:0}
+  html,body{height:auto;overflow:visible;background:#fff}
+  #app{display:block;height:auto}
+  #side,#login,.modal,.measure{display:none!important}
+  #scroll{display:block;overflow:visible;padding:0}
+  .paper{width:794px;height:var(--pageh);margin:0;padding:0 57px;box-shadow:none;display:flex}
+  .fld{height:calc(var(--r) * var(--lh))!important;min-height:0}
+  .fld::placeholder{color:transparent}
+}
+</style>
+</head>
+<body>
+<div id="login" hidden>
+  <form id="lform" autocomplete="on">
+    <div class="brand">PRPS</div>
+    <label for="lem">이메일</label><input id="lem" type="email" autocomplete="username" required>
+    <label for="lpw">비밀번호</label><input id="lpw" type="password" autocomplete="current-password" required>
+    <button id="lgo" type="submit">로그인</button>
+    <p id="lmsg"></p>
+  </form>
+</div>
+
+<div id="app" hidden>
+  <aside id="side">
+    <div class="info">
+      <div class="brand">PRPS</div>
+      <div id="docname"></div>
+      <div id="status"></div>
+      <button class="iconbtn" id="bRefresh" title="새로고침" aria-label="새로고침">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg>
+      </button>
+    </div>
+    <div class="menu">
+      <button class="sb" id="bNew">새로 열기</button>
+      <button class="sb" id="bOpen">불러오기</button>
+      <button class="sb" id="bCopy">사본 만들기</button>
+      <button class="sb" id="bPrint">인쇄하기</button>
+      <button class="sb" id="bExport">내보내기</button>
+      <button class="sb" id="bImport">가져오기</button>
+      <button class="sb danger" id="bDel">삭제하기</button>
+    </div>
+    <div class="spacer"></div>
+    <div class="foot">
+      <button class="tb" id="bInst">📲 설치</button>
+      <button class="tb" id="bOut">로그아웃</button>
+    </div>
+  </aside>
+  <div id="scroll"><div class="paper" id="paper"></div></div>
+</div>
+
+<div class="modal" id="listModal" hidden>
+  <div class="mbox" role="dialog" aria-label="기획서 목록">
+    <div class="mhead">불러오기 <span id="listCount"></span></div>
+    <input id="q" type="search" placeholder="제목·장르·키워드 검색" autocomplete="off">
+    <ul id="list"></ul>
+    <button class="mclose" id="bClose">닫기</button>
+  </div>
+</div>
+
+<input type="file" id="fileIn" accept=".json,application/json" hidden>
+
+<script>
+(() => {
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const Core = window.Core;
+  const LH = 20;
+  /* 칸별 최대 줄 수 (A4 한 장 기준). 키 = Supabase prps_doc 칸 이름 */
+  const LIMIT = {title:1, genre:1, intent:2, keywords:2, logline:2, intro:6,
+                 c1_name:1, c1:2, c2_name:1, c2:2, c3_name:1, c3:2, ki:4, seung:4, jeon:4, gyeol:4};
+  const KEYS = Object.keys(LIMIT);
+  const ONE = new Set(KEYS.filter(k => LIMIT[k] === 1));
+  const PH = {title:'제목', genre:'장르', c1_name:'이름', c2_name:'이름', c3_name:'이름'};
+  const PX = 'prps:';   // 이 기기 사본 (다른 앱과 안 섞이게)
+
+  /* ── 한국 시간 ── */
+  const two = n => String(n).padStart(2, '0');
+  const kp = t => { const d = new Date(new Date(t).getTime() + 32400000);
+    return {Y:d.getUTCFullYear(), M:two(d.getUTCMonth()+1), D:two(d.getUTCDate()), h:two(d.getUTCHours()), m:two(d.getUTCMinutes())}; };
+  const fname = t => { const p = kp(t); return `${p.Y}${p.M}${p.D}-${p.h}${p.m}`; };       // 파일명 = 시각
+  const fmt = t => { const p = kp(t); return `${p.Y}.${p.M}.${p.D} ${p.h}:${p.m}`; };
+  const hm = t => { const p = kp(t); return `${p.h}:${p.m}`; };
+
+  /* ── 양식 ── */
+  function sheetHTML(live){
+    const F = (k, cls='') => {
+      const r = LIMIT[k];
+      if (!live) return `<div class="fld ${cls}" data-f="${k}" style="--r:${r}"></div>`;
+      return `<textarea class="fld ${cls}" data-f="${k}" rows="${r}" style="--r:${r}" placeholder="${PH[k] || r + '줄 이내'}" spellcheck="false"></textarea>`;
+    };
+    const row = (label, k) => `<tr><td class="lab">${label}</td><td colspan="3">${F(k)}</td></tr>`;
+    const chr = n => `<tr><td class="name">${F('c'+n+'_name','center')}</td><td colspan="3">${F('c'+n)}</td></tr>`;
+    const head = t => `<tr><td colspan="4" class="head">${t}</td></tr>`;
+    return `<table class="sheet ${live ? 'live' : 'measure'}">
+      <colgroup><col class="c-lab"><col class="c-a"><col class="c-lab"><col></colgroup>
+      ${head('단편 소설 기획서')}
+      <tr><td class="lab">제목</td><td>${F('title')}</td><td class="lab">장르</td><td>${F('genre')}</td></tr>
+      ${row('기획의도','intent')}${row('키워드','keywords')}${row('로그라인','logline')}${row('소개글','intro')}
+      ${head('등장인물')}${chr(1)}${chr(2)}${chr(3)}
+      ${head('시놉시스')}${row('기','ki')}${row('승','seung')}${row('전','jeon')}${row('결','gyeol')}
+    </table>`;
+  }
+  $('#paper').innerHTML = sheetHTML(true);
+  const mw = document.createElement('div'); mw.innerHTML = sheetHTML(false);
+  document.body.appendChild(mw.firstElementChild);
+  const ed = {}, ms = {};
+  document.querySelectorAll('.sheet.live .fld').forEach(el => ed[el.dataset.f] = el);
+  document.querySelectorAll('.sheet.measure .fld').forEach(el => ms[el.dataset.f] = el);
+
+  /* A4 폭에서 몇 줄인지 */
+  function fits(k, v){ ms[k].textContent = v + '​'; return Math.round(ms[k].offsetHeight / LH) <= LIMIT[k]; }
+  function grow(el){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, LIMIT[el.dataset.f] * LH) + 'px'; }
+  const growAll = () => KEYS.forEach(k => grow(ed[k]));
+
+  /* ── 데이터: Supabase prps_doc + 이 기기 사본 ── */
+  let docs = [], doc = null, dirty = new Set(), saveTimer = null, saving = false, failed = false;
+  const lsG = k => { try { return JSON.parse(localStorage.getItem(PX + k) || 'null'); } catch { return null; } };
+  const lsS = (k, v) => { try { localStorage.setItem(PX + k, JSON.stringify(v)); } catch {} };
+  const lsClear = () => ['docs','dirty','cur','uid'].forEach(k => { try { localStorage.removeItem(PX + k); } catch {} });
+  const cache = () => { lsS('docs', docs); lsS('dirty', [...dirty]); if (doc) lsS('cur', doc.id); };
+  const uuid = () => crypto.randomUUID ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c === 'x' ? r : (r&3|8)).toString(16); });
+  const now = () => new Date().toISOString();
+  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now()}; KEYS.forEach(k => d[k] = ''); return d; }
+  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim());
+  const T = s => Date.parse(s) || 0;
+  const recent = () => docs.slice().sort((a, b) => T(b.updated_at) - T(a.updated_at));
+  const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); return o; };
+
+  function setStatus(msg, warn){ const s = $('#status'); s.textContent = msg; s.classList.toggle('warn', !!warn); }
+  function refreshStatus(){
+    if (!doc) return;
+    if (failed) setStatus('저장 실패 · 다시 시도 중', true);
+    else if (dirty.size || saving) setStatus('저장 중…');
+    else setStatus(`저장됨 · ${hm(doc.updated_at)}`);
+  }
+  function note(msg){ setStatus(msg); clearTimeout(note.t); note.t = setTimeout(refreshStatus, 1800); }
+
+  function touch(d){ d.updated_at = now(); dirty.add(d.id); cache(); schedule(); }
+  function schedule(ms = 600){ clearTimeout(saveTimer); saveTimer = setTimeout(push, ms); refreshStatus(); }
+  async function push(){
+    clearTimeout(saveTimer);
+    if (saving || !dirty.size) return;
+    saving = true;
+    const ids = [...dirty], rows = ids.map(id => docs.find(d => d.id === id)).filter(Boolean).map(row);
+    try {
+      if (rows.length) await Core.rest('prps_doc?on_conflict=id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)});
+      rows.forEach(r => { const d = docs.find(x => x.id === r.id); if (!d || d.updated_at === r.updated_at) dirty.delete(r.id); });
+      ids.forEach(id => { if (!docs.find(d => d.id === id)) dirty.delete(id); });
+      failed = false;
+    } catch (e) { failed = true; console.warn(e); }
+    saving = false; cache(); refreshStatus();
+    if (dirty.size) schedule(failed ? 5000 : 300);
+  }
+  async function pull(){
+    try {
+      const rows = await Core.rest('prps_doc?select=*&order=updated_at.desc');
+      const local = new Map(docs.map(d => [d.id, d]));
+      const next = rows.map(r => { const d = {id:r.id, created_at:r.created_at, updated_at:r.updated_at}; KEYS.forEach(k => d[k] = r[k] || ''); return d; });
+      // 아직 못 올린 이 기기 수정분은 그대로 살려서 다시 올림
+      dirty.forEach(id => { const l = local.get(id); if (!l) return; const i = next.findIndex(d => d.id === id);
+        if (i < 0) next.push(l); else if (T(l.updated_at) >= T(next[i].updated_at)) next[i] = l; else dirty.delete(id); });
+      docs = next;
+      const cur = doc && docs.find(d => d.id === doc.id);
+      if (cur && cur !== doc) loadDoc(cur, true);
+      else if (!cur) openStart();
+      cache(); refreshStatus();
+      if (dirty.size) schedule(300);
+    } catch (e) { console.warn(e); setStatus('불러오기 실패 · 새로고침', true); }
+  }
+
+  /* ── 문서 열기 ── */
+  function showName(){ const n = $('#docname'), t = (doc.title || '').trim(); n.textContent = t || '(제목 없음)'; n.classList.toggle('none', !t); }
+  function loadDoc(d, keepScroll){
+    doc = d;
+    KEYS.forEach(k => ed[k].value = d[k] || '');
+    showName(); growAll(); refreshStatus(); lsS('cur', d.id);
+    if (!keepScroll) $('#scroll').scrollTop = 0;
+  }
+  function openStart(){
+    const last = lsG('cur');
+    let d = docs.find(x => x.id === last) || recent()[0];
+    if (!d) { d = blank(); docs.push(d); dirty.add(d.id); schedule(); }
+    loadDoc(d);
+  }
+
+  /* ── 입력: 칸을 넘치는 글자는 아예 안 들어가게 ── */
+  KEYS.forEach(k => {
+    const el = ed[k];
+    el.addEventListener('input', () => {
+      let v = el.value;
+      if (ONE.has(k)) v = v.replace(/\r?\n/g, ' ');
+      const old = doc[k] || '';
+      let caret = null;
+      if (!fits(k, v)) {
+        let p = 0; while (p < old.length && p < v.length && old[p] === v[p]) p++;
+        let s = 0; while (s < old.length - p && s < v.length - p && old[old.length-1-s] === v[v.length-1-s]) s++;
+        const head = old.slice(0, p), tail = old.slice(old.length - s), ins = v.slice(p, v.length - s);
+        let lo = 0, hi = ins.length;
+        while (lo < hi) { const mid = (lo + hi + 1) >> 1; if (fits(k, head + ins.slice(0, mid) + tail)) lo = mid; else hi = mid - 1; }
+        v = head + ins.slice(0, lo) + tail; caret = p + lo;
+        const td = el.closest('td'); td.classList.remove('full'); void td.offsetWidth; td.classList.add('full');
+      }
+      if (v !== el.value) { const c = caret ?? el.selectionStart; el.value = v; el.selectionStart = el.selectionEnd = Math.min(c, v.length); }
+      if (v === old) return;
+      doc[k] = v;
+      if (k === 'title') showName();
+      grow(el); touch(doc);
+    });
+    if (ONE.has(k)) el.addEventListener('keydown', e => {
+      if (e.key === 'Enter' && !e.isComposing) { e.preventDefault(); const i = KEYS.indexOf(k); if (i < KEYS.length - 1) ed[KEYS[i+1]].focus(); }
+    });
+  });
+
+  /* ── 메뉴 ── */
+  $('#bNew').onclick = () => {
+    if (isEmpty(doc)) { ed.title.focus(); note('빈 기획서가 이미 열려 있어요'); return; }
+    const d = blank(); docs.push(d); loadDoc(d); touch(d); ed.title.focus();
+  };
+  $('#bCopy').onclick = () => {
+    const d = Object.assign(blank(), row(doc), {id: uuid(), created_at: now(), updated_at: now()});
+    d.title = (doc.title || '').trim() ? `${doc.title} (사본)` : '';
+    if (!fits('title', d.title)) d.title = doc.title;
+    docs.push(d); loadDoc(d); touch(d); note('사본을 만들었어요');
+  };
+  $('#bDel').onclick = async () => {
+    const name = (doc.title || '').trim() || '(제목 없음)';
+    if (!confirm(`'${name}' 기획서를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`)) return;
+    const id = doc.id;
+    try { await Core.rest('prps_doc?id=eq.' + encodeURIComponent(id), {method:'DELETE'}); }
+    catch (e) { alert('삭제하지 못했어요. 인터넷 연결을 확인해 주세요.\n' + e.message); return; }
+    docs = docs.filter(d => d.id !== id); dirty.delete(id);
+    doc = null; openStart(); cache();
+  };
+  $('#bPrint').onclick = () => {
+    const t = document.title;
+    document.title = fname(doc.created_at);     // PDF 파일명 = 기획서를 만든 시각
+    window.print();
+    setTimeout(() => document.title = t, 500);
+  };
+  $('#bRefresh').onclick = async () => { if (dirty.size) await push(); location.reload(); };
+
+  /* 내보내기 · 가져오기 */
+  $('#bExport').onclick = () => {
+    const body = JSON.stringify({app:'prps', version:2, exported: now(), docs: recent().map(row)}, null, 2);
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], {type:'application/json'}));
+    a.download = `prps-${fname(Date.now())}.json`;   // 파일명 = 내보낸 시각
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  };
+  $('#bImport').onclick = () => $('#fileIn').click();
+  $('#fileIn').onchange = async e => {
+    const f = e.target.files[0]; e.target.value = '';
+    if (!f) return;
+    let arr;
+    try { const j = JSON.parse(await f.text()); arr = Array.isArray(j) ? j : j.docs; if (!Array.isArray(arr)) throw 0; }
+    catch { alert('PRPS 내보내기 파일이 아니에요.'); return; }
+    const OLD = {c1_name:'c1n', c2_name:'c2n', c3_name:'c3n'};   // 처음 만든 판(기기 저장) 파일도 받기
+    const iso = v => typeof v === 'number' ? new Date(v).toISOString() : (T(v) ? new Date(T(v)).toISOString() : now());
+    const isId = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+    let add = 0, upd = 0, skip = 0;
+    arr.forEach(x => {
+      if (!x || typeof x !== 'object') { skip++; return; }
+      const d = blank();
+      KEYS.forEach(k => { const v = x[k] ?? x[OLD[k]]; d[k] = typeof v === 'string' ? v : ''; });
+      d.id = isId(String(x.id || '')) ? String(x.id) : uuid();
+      d.created_at = iso(x.created_at ?? x.created); d.updated_at = iso(x.updated_at ?? x.updated);
+      const i = docs.findIndex(y => y.id === d.id);
+      if (i < 0) { docs.push(d); dirty.add(d.id); add++; }
+      else if (T(d.updated_at) > T(docs[i].updated_at)) { docs[i] = d; dirty.add(d.id); upd++; }
+      else skip++;
+    });
+    if (add && isEmpty(doc) && !upd) { const id = doc.id; docs = docs.filter(d => d.id !== id); dirty.delete(id); Core.rest('prps_doc?id=eq.' + id, {method:'DELETE'}).catch(() => {}); }
+    const cur = docs.find(d => d.id === doc.id) || recent()[0];
+    loadDoc(cur); cache(); schedule(100);
+    alert(`가져오기 완료\n새로 추가 ${add}개 · 최신으로 교체 ${upd}개 · 건너뜀 ${skip}개`);
+  };
+
+  /* ── 불러오기 팝업 (다시 열면 보던 스크롤 그대로) ── */
+  const modal = $('#listModal'), list = $('#list');
+  let listScroll = 0;
+  function renderList(){
+    const q = $('#q').value.trim().toLowerCase(), all = recent();
+    const rows = all.filter(d => !q || ['title','genre','keywords','logline'].some(k => (d[k] || '').toLowerCase().includes(q)));
+    $('#listCount').textContent = q ? `${rows.length} / ${all.length}개` : `${all.length}개`;
+    list.innerHTML = rows.length ? rows.map(d => `<li data-id="${esc(d.id)}" class="${d.id === doc.id ? 'cur' : ''}">
+        <div class="t">${esc((d.title || '').trim() || '(제목 없음)')}</div>
+        <div class="m">${fname(d.created_at)}${d.genre ? ' · ' + esc(d.genre) : ''} · 수정 ${fmt(d.updated_at)}</div></li>`).join('')
+      : `<li class="empty">${q ? '검색 결과가 없어요' : '기획서가 없어요'}</li>`;
+  }
+  function openList(){ renderList(); modal.hidden = false; list.scrollTop = listScroll; }
+  function closeList(){ listScroll = list.scrollTop; modal.hidden = true; }
+  $('#bOpen').onclick = openList;
+  $('#bClose').onclick = closeList;
+  modal.addEventListener('click', e => { if (e.target === modal) closeList(); });
+  $('#q').addEventListener('input', () => { renderList(); list.scrollTop = 0; });
+  list.addEventListener('click', e => {
+    const li = e.target.closest('li[data-id]'); if (!li) return;
+    const d = docs.find(x => x.id === li.dataset.id);
+    closeList(); if (d && d !== doc) loadDoc(d);
+  });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.hidden) closeList();
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); push(); }
+  });
+
+  /* ── 로그인 (모든 앱 공통 jjojjo_ses) ── */
+  $('#lform').addEventListener('submit', async e => {
+    e.preventDefault();
+    const b = $('#lgo'); b.disabled = true; $('#lmsg').textContent = '';
+    try { await Core.login($('#lem').value.trim(), $('#lpw').value); $('#lpw').value = ''; show(); }
+    catch (err) { $('#lmsg').textContent = /invalid/i.test(err.message) ? '이메일 또는 비밀번호가 맞지 않아요.' : err.message; }
+    b.disabled = false;
+  });
+  $('#bOut').onclick = async () => {
+    if (dirty.size) await push();
+    if (dirty.size && !confirm('아직 못 올린 수정이 있어요. 그래도 로그아웃할까요?')) return;
+    if (!confirm('로그아웃할까요? (다른 앱도 함께 로그아웃돼요)')) return;
+    await Core.logout(); lsClear(); location.reload();
+  };
+  function show(){
+    if (!Core) { document.body.innerHTML = '<p style="padding:24px">공용 파일(core.v1.js)을 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.</p>'; return; }
+    const s = Core.ses();
+    $('#login').hidden = !!s; $('#app').hidden = !s;
+    if (!s) { setTimeout(() => $('#lem').focus(), 0); return; }
+    const uid = s.user && s.user.id;
+    if (lsG('uid') && lsG('uid') !== uid) lsClear();
+    lsS('uid', uid);
+    docs = lsG('docs') || []; dirty = new Set(lsG('dirty') || []);
+    if (docs.length) openStart(); else setStatus('불러오는 중…');
+    pull();
+  }
+
+  /* ── 📲 설치 ── */
+  let dp = null;
+  const standalone = matchMedia('(display-mode: standalone)').matches || navigator.standalone;
+  $('#bInst').hidden = !!standalone;
+  addEventListener('beforeinstallprompt', e => { e.preventDefault(); dp = e; });
+  addEventListener('appinstalled', () => { dp = null; $('#bInst').hidden = true; });
+  $('#bInst').onclick = async () => {
+    if (dp) { dp.prompt(); await dp.userChoice; dp = null; return; }
+    let had = false; try { had = navigator.getInstalledRelatedApps && (await navigator.getInstalledRelatedApps()).length > 0; } catch {}
+    alert(/iphone|ipad|ipod/i.test(navigator.userAgent) ? '아이폰: 사파리 아래 공유 버튼 → "홈 화면에 추가"를 누르세요.'
+      : (had ? 'PRPS가 이미 이 기기에 설치돼 있어요.\n' : '') + '지금은 바로 설치할 수 없어요.\n이미 깔려 있다면 기존 PRPS를 지우고(아이콘 꾹 → 제거) 이 페이지를 새로고침하면 설치 버튼이 동작해요.\n또는 크롬 메뉴(⋮) → "앱 설치"를 눌러도 돼요.');
+  };
+
+  /* ── 시작 ── */
+  window.addEventListener('pagehide', () => { if (dirty.size) push(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (dirty.size) push(); } else if (doc && !dirty.size) pull(); });
+  window.addEventListener('online', () => { if (dirty.size) push(); });
+  let rw = innerWidth;
+  window.addEventListener('resize', () => { if (innerWidth !== rw) { rw = innerWidth; growAll(); } });
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => doc && growAll());
+  show();
+  if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>

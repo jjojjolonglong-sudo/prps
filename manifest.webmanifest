@@ -1,0 +1,21 @@
+{
+  "id": "prps",
+  "name": "PRPS 단편 소설 기획서",
+  "short_name": "PRPS",
+  "description": "단편 소설 기획서를 A4 한 장에",
+  "lang": "ko",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#e9edf1",
+  "theme_color": "#f6f8fa",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "related_applications": [
+    { "platform": "webapp", "url": "https://jjojjolonglong-sudo.github.io/prps/manifest.webmanifest" }
+  ]
+}
