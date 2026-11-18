@@ -487,20 +487,8 @@ td.full{animation:full .45s ease-out}
     $('#gate').hidden = true; $('#app').hidden = false;
     setStatus('불러오는 중…');
     try { docs = await readAll(); } catch (e) { console.warn(e); return lost(); }
-    await migrate();
     doc = null; openStart();
     if (dirty.size) schedule(100);
-  }
-  /* 서버(Supabase)에 저장하던 시절의 기획서를 처음 한 번 폴더로 옮기기 */
-  async function migrate(){
-    if (lsG('migrated') || !window.Core || !Core.ses()) return;
-    try {
-      const rows = await Core.rest('prps_doc?select=*');
-      let n = 0;
-      rows.forEach(r => { if (docs.some(d => d.id === r.id)) return; docs.push(norm(r)); dirty.add(r.id); n++; });
-      lsS('migrated', true);
-      if (n) setTimeout(() => note(`서버에 있던 기획서 ${n}개를 폴더로 옮겼어요`), 50);
-    } catch (e) { console.warn(e); }
   }
   async function start(){
     if (typeof window.showDirectoryPicker !== 'function') {
