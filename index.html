@@ -22,18 +22,15 @@ body{font-family:"Malgun Gothic","맑은 고딕","Apple SD Gothic Neo","Noto San
 button{font:inherit;color:inherit;border-radius:0}
 [hidden]{display:none!important}
 
-/* ── 로그인 ── */
-#login{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
-#login form{width:300px;max-width:100%;background:#fff;border:1px solid #c3ccd5;padding:28px 24px}
-#login .brand{text-align:center;padding:0 0 20px}
-#login label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px}
-#login input{width:100%;padding:8px 9px;border:1px solid #cfd6dd;font:inherit;font-size:14px;outline:0;border-radius:0}
-#login input:focus{border-color:var(--accent)}
-#login button{width:100%;margin-top:18px;padding:9px;background:var(--ink);color:#fff;border:0;font-size:14px;cursor:pointer}
-#login button:disabled{opacity:.5}
-#lmsg{margin:10px 0 0;font-size:12px;line-height:18px;color:var(--warn)}
-#lmsg:empty{display:none}
-
+/* ── 폴더 연결 화면 ── */
+#gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
+#gate .box{width:320px;max-width:100%;background:#fff;border:1px solid #c3ccd5;padding:28px 24px;text-align:center}
+#gate .brand{padding:0 0 18px}
+#gmsg{margin:0;font-size:13px;line-height:20px;color:var(--ink);word-break:keep-all}
+#gmsg small{display:block;margin-top:6px;font-size:12px;line-height:18px;color:var(--muted)}
+#gate .gb{display:block;width:100%;margin-top:18px;padding:9px;background:var(--ink);color:#fff;border:0;font-size:14px;cursor:pointer}
+#gate .gb.sub{margin-top:8px;background:#fff;color:var(--ink);border:1px solid #cfd6dd}
+#gate .gb.sub:hover{border-color:var(--accent);color:var(--accent)}
 /* ── 앱 ── */
 #app{display:flex;height:100vh;height:100dvh}
 
@@ -53,7 +50,7 @@ button{font:inherit;color:inherit;border-radius:0}
 .sb.danger:hover{border-color:var(--warn);color:var(--warn)}
 .spacer{flex:1}
 .foot{display:flex;flex-direction:column;align-items:flex-start;gap:2px}
-.tb{background:none;border:0;padding:3px 0;font-size:12px;color:var(--muted);cursor:pointer}
+.tb{background:none;border:0;padding:3px 0;font-size:12px;line-height:16px;color:var(--muted);cursor:pointer;text-align:left;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .tb:hover{color:var(--accent)}
 
 /* 본문: A4 한 장 */
@@ -126,7 +123,7 @@ td.full{animation:full .45s ease-out}
   @page{size:A4;margin:0}
   html,body{height:auto;overflow:visible;background:#fff}
   #app{display:block;height:auto}
-  #side,#login,.modal,.measure{display:none!important}
+  #side,#gate,.modal,.measure{display:none!important}
   #scroll{display:block;overflow:visible;padding:0}
   .paper{width:794px;height:var(--pageh);margin:0;padding:0 57px;box-shadow:none;display:flex}
   .fld{height:calc(var(--r) * var(--lh))!important;min-height:0}
@@ -135,14 +132,13 @@ td.full{animation:full .45s ease-out}
 </style>
 </head>
 <body>
-<div id="login" hidden>
-  <form id="lform" autocomplete="on">
+<div id="gate" hidden>
+  <div class="box">
     <div class="brand">PRPS</div>
-    <label for="lem">이메일</label><input id="lem" type="email" autocomplete="username" required>
-    <label for="lpw">비밀번호</label><input id="lpw" type="password" autocomplete="current-password" required>
-    <button id="lgo" type="submit">로그인</button>
-    <p id="lmsg"></p>
-  </form>
+    <p id="gmsg"></p>
+    <button class="gb" id="gMain" hidden></button>
+    <button class="gb sub" id="gSub" hidden></button>
+  </div>
 </div>
 
 <div id="app" hidden>
@@ -166,8 +162,8 @@ td.full{animation:full .45s ease-out}
     </div>
     <div class="spacer"></div>
     <div class="foot">
+      <button class="tb" id="bDir" title="저장 폴더 바꾸기"></button>
       <button class="tb" id="bInst">📲 설치</button>
-      <button class="tb" id="bOut">로그아웃</button>
     </div>
   </aside>
   <div id="scroll"><div class="paper" id="paper"></div></div>
@@ -188,15 +184,14 @@ td.full{animation:full .45s ease-out}
 (() => {
   const $ = s => document.querySelector(s);
   const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-  const Core = window.Core;
   const LH = 20;
-  /* 칸별 최대 줄 수 (A4 한 장 기준). 키 = Supabase prps_doc 칸 이름 */
+  /* 칸별 최대 줄 수 (A4 한 장 기준) */
   const LIMIT = {title:1, genre:1, intent:2, keywords:2, logline:2, intro:6,
                  c1_name:1, c1:2, c2_name:1, c2:2, c3_name:1, c3:2, ki:4, seung:4, jeon:4, gyeol:4};
   const KEYS = Object.keys(LIMIT);
   const ONE = new Set(KEYS.filter(k => LIMIT[k] === 1));
   const PH = {title:'제목', genre:'장르', c1_name:'이름', c2_name:'이름', c3_name:'이름'};
-  const PX = 'prps:';   // 이 기기 사본 (다른 앱과 안 섞이게)
+  const PX = 'prps:';
 
   /* ── 한국 시간 ── */
   const two = n => String(n).padStart(2, '0');
@@ -232,81 +227,129 @@ td.full{animation:full .45s ease-out}
   document.querySelectorAll('.sheet.live .fld').forEach(el => ed[el.dataset.f] = el);
   document.querySelectorAll('.sheet.measure .fld').forEach(el => ms[el.dataset.f] = el);
 
-  /* A4 폭에서 몇 줄인지 */
   function fits(k, v){ ms[k].textContent = v + '​'; return Math.round(ms[k].offsetHeight / LH) <= LIMIT[k]; }
   function grow(el){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, LIMIT[el.dataset.f] * LH) + 'px'; }
   const growAll = () => KEYS.forEach(k => grow(ed[k]));
 
-  /* ── 데이터: Supabase prps_doc + 이 기기 사본 ── */
-  let docs = [], doc = null, dirty = new Set(), saveTimer = null, saving = false, failed = false;
+  /* ── 이 기기 작은 설정 ── */
   const lsG = k => { try { return JSON.parse(localStorage.getItem(PX + k) || 'null'); } catch { return null; } };
   const lsS = (k, v) => { try { localStorage.setItem(PX + k, JSON.stringify(v)); } catch {} };
-  const lsClear = () => ['docs','dirty','cur','uid'].forEach(k => { try { localStorage.removeItem(PX + k); } catch {} });
-  const cache = () => { lsS('docs', docs); lsS('dirty', [...dirty]); if (doc) lsS('cur', doc.id); };
+  ['docs','dirty','uid'].forEach(k => { try { localStorage.removeItem(PX + k); } catch {} });   // 서버 저장 시절 사본 정리
+
+  /* ── 저장 폴더 (PC 크롬·엣지). 폴더 핸들은 이 브라우저의 IndexedDB에 기억 ── */
+  const idb = {
+    open: () => new Promise((ok, no) => { const r = indexedDB.open('prps', 1); r.onupgradeneeded = () => r.result.createObjectStore('kv'); r.onsuccess = () => ok(r.result); r.onerror = () => no(r.error); }),
+    async run(mode, fn){ const db = await this.open(); return new Promise((ok, no) => { const tx = db.transaction('kv', mode), q = fn(tx.objectStore('kv')); tx.oncomplete = () => { db.close(); ok(q.result); }; tx.onerror = () => { db.close(); no(tx.error); }; }); },
+    get: k => idb.run('readonly', s => s.get(k)),
+    set: (k, v) => idb.run('readwrite', s => s.put(v, k)),
+  };
+  const perm = async (h, ask) => {
+    if (typeof h.queryPermission !== 'function') return true;
+    if ((await h.queryPermission({mode:'readwrite'})) === 'granted') return true;
+    return !!ask && (await h.requestPermission({mode:'readwrite'})) === 'granted';
+  };
+  let dir = null;
+
+  /* ── 기획서 = 폴더 안의 .json 파일 하나 ── */
+  let docs = [], doc = null, dirty = new Set(), saveTimer = null, saving = false, failed = false;
   const uuid = () => crypto.randomUUID ? crypto.randomUUID()
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random()*16|0; return (c === 'x' ? r : (r&3|8)).toString(16); });
   const now = () => new Date().toISOString();
-  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now()}; KEYS.forEach(k => d[k] = ''); return d; }
-  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim());
   const T = s => Date.parse(s) || 0;
+  const iso = v => typeof v === 'number' ? new Date(v).toISOString() : (T(v) ? new Date(T(v)).toISOString() : now());
+  const isId = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now()}; KEYS.forEach(k => d[k] = ''); return d; }
+  const OLD = {c1_name:'c1n', c2_name:'c2n', c3_name:'c3n'};   // 처음 판(c1n …) 파일도 읽기
+  function norm(x){
+    const d = blank();
+    KEYS.forEach(k => { const v = x[k] ?? x[OLD[k]]; d[k] = typeof v === 'string' ? v : ''; });
+    d.id = isId(String(x.id || '')) ? String(x.id) : uuid();
+    d.created_at = iso(x.created_at ?? x.created); d.updated_at = iso(x.updated_at ?? x.updated);
+    return d;
+  }
+  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim());
   const recent = () => docs.slice().sort((a, b) => T(b.updated_at) - T(a.updated_at));
   const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); return o; };
+
+  async function readAll(){
+    const byId = new Map();
+    for await (const [name, fh] of dir.entries()) {
+      if (fh.kind !== 'file' || !/\.json$/i.test(name)) continue;
+      try {
+        const j = JSON.parse(await (await fh.getFile()).text());
+        if (!j || j.app !== 'prps' || !j.id) continue;      // 내보내기 묶음 파일 등은 건너뜀
+        const d = norm(j); d._file = name;
+        const o = byId.get(d.id);
+        if (!o || T(d.updated_at) > T(o.updated_at)) byId.set(d.id, d);   // 같은 기획서가 두 파일이면(동기화 충돌 사본) 최신 것
+      } catch {}
+    }
+    return [...byId.values()];
+  }
+  async function exists(name){ try { await dir.getFileHandle(name); return true; } catch { return false; } }
+  async function freeName(base){
+    const used = new Set(docs.map(d => d._file).filter(Boolean));
+    for (let i = 1; ; i++) { const n = base + (i > 1 ? '_' + i : '') + '.json'; if (!used.has(n) && !(await exists(n))) return n; }
+  }
+  async function writeDoc(d){
+    if (!d._file) d._file = await freeName(fname(d.created_at));
+    const w = await (await dir.getFileHandle(d._file, {create:true})).createWritable();
+    await w.write(JSON.stringify(Object.assign({app:'prps', version:3}, row(d)), null, 2));
+    await w.close();
+  }
 
   function setStatus(msg, warn){ const s = $('#status'); s.textContent = msg; s.classList.toggle('warn', !!warn); }
   function refreshStatus(){
     if (!doc) return;
-    if (failed) setStatus('저장 실패 · 다시 시도 중', true);
+    if (failed) setStatus('저장 실패 · 폴더 확인', true);
     else if (dirty.size || saving) setStatus('저장 중…');
+    else if (!doc._file) setStatus('새 기획서');
     else setStatus(`저장됨 · ${hm(doc.updated_at)}`);
   }
-  function note(msg){ setStatus(msg); clearTimeout(note.t); note.t = setTimeout(refreshStatus, 1800); }
+  function note(msg){ setStatus(msg); clearTimeout(note.t); note.t = setTimeout(refreshStatus, 2200); }
 
-  function touch(d){ d.updated_at = now(); dirty.add(d.id); cache(); schedule(); }
+  function touch(d){ d.updated_at = now(); dirty.add(d.id); schedule(); }
   function schedule(ms = 600){ clearTimeout(saveTimer); saveTimer = setTimeout(push, ms); refreshStatus(); }
   async function push(){
     clearTimeout(saveTimer);
-    if (saving || !dirty.size) return;
+    if (saving || !dirty.size || !dir) return;
     saving = true;
-    const ids = [...dirty], rows = ids.map(id => docs.find(d => d.id === id)).filter(Boolean).map(row);
-    try {
-      if (rows.length) await Core.rest('prps_doc?on_conflict=id', {method:'POST', headers:{Prefer:'resolution=merge-duplicates,return=minimal'}, body: JSON.stringify(rows)});
-      rows.forEach(r => { const d = docs.find(x => x.id === r.id); if (!d || d.updated_at === r.updated_at) dirty.delete(r.id); });
-      ids.forEach(id => { if (!docs.find(d => d.id === id)) dirty.delete(id); });
-      failed = false;
-    } catch (e) { failed = true; console.warn(e); }
-    saving = false; cache(); refreshStatus();
+    for (const id of [...dirty]) {
+      const d = docs.find(x => x.id === id);
+      if (!d) { dirty.delete(id); continue; }
+      const stamp = d.updated_at;
+      try { await writeDoc(d); failed = false; if (d.updated_at === stamp) dirty.delete(id); }
+      catch (e) { failed = true; console.warn(e); if (e.name === 'NotAllowedError' || e.name === 'SecurityError') { saving = false; return lost(); } }
+    }
+    saving = false; refreshStatus();
     if (dirty.size) schedule(failed ? 5000 : 300);
   }
-  async function pull(){
+  /* 다른 PC에서 바뀐 파일 다시 읽기 (이 창으로 돌아올 때) */
+  async function reread(){
+    if (!dir || dirty.size || saving) return;
     try {
-      const rows = await Core.rest('prps_doc?select=*&order=updated_at.desc');
-      const local = new Map(docs.map(d => [d.id, d]));
-      const next = rows.map(r => { const d = {id:r.id, created_at:r.created_at, updated_at:r.updated_at}; KEYS.forEach(k => d[k] = r[k] || ''); return d; });
-      // 아직 못 올린 이 기기 수정분은 그대로 살려서 다시 올림
-      dirty.forEach(id => { const l = local.get(id); if (!l) return; const i = next.findIndex(d => d.id === id);
-        if (i < 0) next.push(l); else if (T(l.updated_at) >= T(next[i].updated_at)) next[i] = l; else dirty.delete(id); });
-      docs = next;
+      const got = await readAll();
+      const unsaved = docs.filter(d => !d._file);              // 아직 한 글자도 안 쓴 새 기획서
+      docs = got.concat(unsaved.filter(u => !got.some(g => g.id === u.id)));
       const cur = doc && docs.find(d => d.id === doc.id);
-      if (cur && cur !== doc) loadDoc(cur, true);
-      else if (!cur) openStart();
-      cache(); refreshStatus();
-      if (dirty.size) schedule(300);
-    } catch (e) { console.warn(e); setStatus('불러오기 실패 · 새로고침', true); }
+      if (!cur) openStart();
+      else if (cur !== doc) { if (T(cur.updated_at) > T(doc.updated_at)) loadDoc(cur, true); else { cur._file = cur._file || doc._file; doc = cur; } }
+      refreshStatus();
+    } catch (e) { if (e.name === 'NotAllowedError') lost(); }
   }
 
   /* ── 문서 열기 ── */
   function showName(){ const n = $('#docname'), t = (doc.title || '').trim(); n.textContent = t || '(제목 없음)'; n.classList.toggle('none', !t); }
   function loadDoc(d, keepScroll){
     doc = d;
-    KEYS.forEach(k => ed[k].value = d[k] || '');
     document.title = fname(d.created_at);   // 탭 이름·PDF 파일명 = 기획서를 만든 날짜_시각
+    KEYS.forEach(k => ed[k].value = d[k] || '');
     showName(); growAll(); refreshStatus(); lsS('cur', d.id);
     if (!keepScroll) $('#scroll').scrollTop = 0;
   }
   function openStart(){
     const last = lsG('cur');
     let d = docs.find(x => x.id === last) || recent()[0];
-    if (!d) { d = blank(); docs.push(d); dirty.add(d.id); schedule(); }
+    if (!d) { d = blank(); docs.push(d); }   // 파일은 첫 글자를 쓸 때 생겨요
     loadDoc(d);
   }
 
@@ -341,7 +384,8 @@ td.full{animation:full .45s ease-out}
   /* ── 메뉴 ── */
   $('#bNew').onclick = () => {
     if (isEmpty(doc)) { ed.title.focus(); note('빈 기획서가 이미 열려 있어요'); return; }
-    const d = blank(); docs.push(d); loadDoc(d); touch(d); ed.title.focus();
+    if (!doc._file) docs = docs.filter(x => x !== doc);
+    const d = blank(); docs.push(d); loadDoc(d); ed.title.focus();
   };
   $('#bCopy').onclick = () => {
     const d = Object.assign(blank(), row(doc), {id: uuid(), created_at: now(), updated_at: now()});
@@ -351,12 +395,11 @@ td.full{animation:full .45s ease-out}
   };
   $('#bDel').onclick = async () => {
     const name = (doc.title || '').trim() || '(제목 없음)';
-    if (!confirm(`'${name}' 기획서를 삭제할까요?\n삭제하면 되돌릴 수 없습니다.`)) return;
-    const id = doc.id;
-    try { await Core.rest('prps_doc?id=eq.' + encodeURIComponent(id), {method:'DELETE'}); }
-    catch (e) { alert('삭제하지 못했어요. 인터넷 연결을 확인해 주세요.\n' + e.message); return; }
-    docs = docs.filter(d => d.id !== id); dirty.delete(id);
-    doc = null; openStart(); cache();
+    if (!confirm(`'${name}' 기획서를 삭제할까요?\n폴더의 파일(${doc._file || '아직 없음'})도 지워지고 되돌릴 수 없습니다.`)) return;
+    const d = doc;
+    if (d._file) { try { await dir.removeEntry(d._file); } catch (e) { if (e.name !== 'NotFoundError') { alert('파일을 지우지 못했어요.\n' + e.message); return; } } }
+    docs = docs.filter(x => x !== d); dirty.delete(d.id);
+    doc = null; openStart();
   };
   $('#bPrint').onclick = () => window.print();
   addEventListener('beforeprint', () => { if (doc) document.title = fname(doc.created_at); });   // Ctrl+P로 인쇄해도 같은 파일명
@@ -364,7 +407,7 @@ td.full{animation:full .45s ease-out}
 
   /* 내보내기 · 가져오기 */
   $('#bExport').onclick = () => {
-    const body = JSON.stringify({app:'prps', version:2, exported: now(), docs: recent().map(row)}, null, 2);
+    const body = JSON.stringify({app:'prps-export', version:3, exported: now(), docs: recent().filter(d => d._file).map(row)}, null, 2);
     const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([body], {type:'application/json'}));
     a.download = `${fname(Date.now())}.json`;   // 파일명 = 내보낸 날짜_시각
     document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
@@ -374,26 +417,18 @@ td.full{animation:full .45s ease-out}
     const f = e.target.files[0]; e.target.value = '';
     if (!f) return;
     let arr;
-    try { const j = JSON.parse(await f.text()); arr = Array.isArray(j) ? j : j.docs; if (!Array.isArray(arr)) throw 0; }
-    catch { alert('PRPS 내보내기 파일이 아니에요.'); return; }
-    const OLD = {c1_name:'c1n', c2_name:'c2n', c3_name:'c3n'};   // 처음 만든 판(기기 저장) 파일도 받기
-    const iso = v => typeof v === 'number' ? new Date(v).toISOString() : (T(v) ? new Date(T(v)).toISOString() : now());
-    const isId = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+    try { const j = JSON.parse(await f.text()); arr = Array.isArray(j) ? j : Array.isArray(j.docs) ? j.docs : (j && j.app === 'prps' && j.id ? [j] : null); if (!arr) throw 0; }
+    catch { alert('PRPS 파일이 아니에요.'); return; }
     let add = 0, upd = 0, skip = 0;
     arr.forEach(x => {
       if (!x || typeof x !== 'object') { skip++; return; }
-      const d = blank();
-      KEYS.forEach(k => { const v = x[k] ?? x[OLD[k]]; d[k] = typeof v === 'string' ? v : ''; });
-      d.id = isId(String(x.id || '')) ? String(x.id) : uuid();
-      d.created_at = iso(x.created_at ?? x.created); d.updated_at = iso(x.updated_at ?? x.updated);
-      const i = docs.findIndex(y => y.id === d.id);
+      const d = norm(x), i = docs.findIndex(y => y.id === d.id);
       if (i < 0) { docs.push(d); dirty.add(d.id); add++; }
-      else if (T(d.updated_at) > T(docs[i].updated_at)) { docs[i] = d; dirty.add(d.id); upd++; }
+      else if (T(d.updated_at) > T(docs[i].updated_at)) { d._file = docs[i]._file; docs[i] = d; dirty.add(d.id); upd++; }
       else skip++;
     });
-    if (add && isEmpty(doc) && !upd) { const id = doc.id; docs = docs.filter(d => d.id !== id); dirty.delete(id); Core.rest('prps_doc?id=eq.' + id, {method:'DELETE'}).catch(() => {}); }
-    const cur = docs.find(d => d.id === doc.id) || recent()[0];
-    loadDoc(cur); cache(); schedule(100);
+    if (add && !doc._file && isEmpty(doc)) docs = docs.filter(x => x !== doc);
+    loadDoc(docs.find(d => d.id === doc.id) || recent()[0]); schedule(100);
     alert(`가져오기 완료\n새로 추가 ${add}개 · 최신으로 교체 ${upd}개 · 건너뜀 ${skip}개`);
   };
 
@@ -401,12 +436,12 @@ td.full{animation:full .45s ease-out}
   const modal = $('#listModal'), list = $('#list');
   let listScroll = 0;
   function renderList(){
-    const q = $('#q').value.trim().toLowerCase(), all = recent();
+    const q = $('#q').value.trim().toLowerCase(), all = recent().filter(d => d._file || d === doc);
     const rows = all.filter(d => !q || ['title','genre','keywords','logline'].some(k => (d[k] || '').toLowerCase().includes(q)));
     $('#listCount').textContent = q ? `${rows.length} / ${all.length}개` : `${all.length}개`;
     list.innerHTML = rows.length ? rows.map(d => `<li data-id="${esc(d.id)}" class="${d.id === doc.id ? 'cur' : ''}">
         <div class="t">${esc((d.title || '').trim() || '(제목 없음)')}</div>
-        <div class="m">${fname(d.created_at)}${d.genre ? ' · ' + esc(d.genre) : ''} · 수정 ${fmt(d.updated_at)}</div></li>`).join('')
+        <div class="m">${esc(d._file ? d._file.replace(/\.json$/i, '') : fname(d.created_at))}${d.genre ? ' · ' + esc(d.genre) : ''} · 수정 ${fmt(d.updated_at)}</div></li>`).join('')
       : `<li class="empty">${q ? '검색 결과가 없어요' : '기획서가 없어요'}</li>`;
   }
   function openList(){ renderList(); modal.hidden = false; list.scrollTop = listScroll; }
@@ -418,39 +453,70 @@ td.full{animation:full .45s ease-out}
   list.addEventListener('click', e => {
     const li = e.target.closest('li[data-id]'); if (!li) return;
     const d = docs.find(x => x.id === li.dataset.id);
-    closeList(); if (d && d !== doc) loadDoc(d);
+    closeList();
+    if (d && d !== doc) { if (!doc._file) docs = docs.filter(x => x !== doc); loadDoc(d); }
   });
   document.addEventListener('keydown', e => {
     if (e.key === 'Escape' && !modal.hidden) closeList();
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 's') { e.preventDefault(); push(); }
   });
 
-  /* ── 로그인 (모든 앱 공통 jjojjo_ses) ── */
-  $('#lform').addEventListener('submit', async e => {
-    e.preventDefault();
-    const b = $('#lgo'); b.disabled = true; $('#lmsg').textContent = '';
-    try { await Core.login($('#lem').value.trim(), $('#lpw').value); $('#lpw').value = ''; show(); }
-    catch (err) { $('#lmsg').textContent = /invalid/i.test(err.message) ? '이메일 또는 비밀번호가 맞지 않아요.' : err.message; }
-    b.disabled = false;
-  });
-  $('#bOut').onclick = async () => {
-    if (dirty.size) await push();
-    if (dirty.size && !confirm('아직 못 올린 수정이 있어요. 그래도 로그아웃할까요?')) return;
-    if (!confirm('로그아웃할까요? (다른 앱도 함께 로그아웃돼요)')) return;
-    await Core.logout(); lsClear(); location.reload();
-  };
-  function show(){
-    if (!Core) { document.body.innerHTML = '<p style="padding:24px">공용 파일(core.v1.js)을 불러오지 못했어요. 인터넷 연결을 확인하고 새로고침해 주세요.</p>'; return; }
-    const s = Core.ses();
-    $('#login').hidden = !!s; $('#app').hidden = !s;
-    if (!s) { setTimeout(() => $('#lem').focus(), 0); return; }
-    const uid = s.user && s.user.id;
-    if (lsG('uid') && lsG('uid') !== uid) lsClear();
-    lsS('uid', uid);
-    docs = lsG('docs') || []; dirty = new Set(lsG('dirty') || []);
-    if (docs.length) openStart(); else setStatus('불러오는 중…');
-    pull();
+  /* ── 폴더 연결 화면 ── */
+  function gate(msg, main, sub){
+    $('#app').hidden = true; $('#gate').hidden = false;
+    $('#gmsg').innerHTML = msg;
+    const m = $('#gMain'), s = $('#gSub');
+    m.hidden = !main; s.hidden = !sub;
+    if (main) { m.textContent = main[0]; m.onclick = main[1]; }
+    if (sub) { s.textContent = sub[0]; s.onclick = sub[1]; }
   }
+  async function pickDir(){
+    let h;
+    try { h = await showDirectoryPicker({mode:'readwrite', id:'prps-docs'}); } catch { return; }   // 창을 닫으면 그대로
+    if (!(await perm(h, true))) return;
+    await idb.set('dir', h).catch(() => {});
+    await useDir(h);
+  }
+  function lost(){
+    dir = null;
+    gate('저장 폴더에 쓸 권한이 꺼졌어요.<small>아래 버튼을 눌러 다시 허락해 주세요.</small>', ['폴더 다시 열기', start], ['다른 폴더 고르기', pickDir]);
+  }
+  async function useDir(h){
+    dir = h;
+    $('#bDir').textContent = '📁 ' + h.name;
+    $('#gate').hidden = true; $('#app').hidden = false;
+    setStatus('불러오는 중…');
+    try { docs = await readAll(); } catch (e) { console.warn(e); return lost(); }
+    await migrate();
+    doc = null; openStart();
+    if (dirty.size) schedule(100);
+  }
+  /* 서버(Supabase)에 저장하던 시절의 기획서를 처음 한 번 폴더로 옮기기 */
+  async function migrate(){
+    if (lsG('migrated') || !window.Core || !Core.ses()) return;
+    try {
+      const rows = await Core.rest('prps_doc?select=*');
+      let n = 0;
+      rows.forEach(r => { if (docs.some(d => d.id === r.id)) return; docs.push(norm(r)); dirty.add(r.id); n++; });
+      lsS('migrated', true);
+      if (n) setTimeout(() => note(`서버에 있던 기획서 ${n}개를 폴더로 옮겼어요`), 50);
+    } catch (e) { console.warn(e); }
+  }
+  async function start(){
+    if (typeof window.showDirectoryPicker !== 'function') {
+      return gate('PRPS는 기획서를 PC 폴더에 파일로 저장해요.<small>PC의 크롬이나 엣지에서 열어 주세요.<br>휴대폰·이 브라우저에서는 폴더를 쓸 수 없어요.</small>');
+    }
+    const h = await idb.get('dir').catch(() => null);
+    if (h && await perm(h, false).catch(() => false)) return useDir(h);
+    if (h) return gate(`저장 폴더 <b>${esc(h.name)}</b>를 다시 열어요.<small>브라우저가 폴더 사용을 물으면 허용을 눌러 주세요.<br>('방문할 때마다 허용'을 고르면 다음부터는 바로 열려요.)</small>`,
+      ['폴더 열기', async () => { if (await perm(h, true).catch(() => false)) useDir(h); }], ['다른 폴더 고르기', pickDir]);
+    gate('기획서를 저장할 폴더를 골라 주세요.<small>기획서마다 날짜_시각 이름의 파일이 생겨요.<br>구글 드라이브 폴더를 고르면 PC끼리 자동으로 맞춰져요.</small>', ['폴더 고르기', pickDir]);
+  }
+  $('#bDir').onclick = async () => {
+    if (dirty.size) await push();
+    if (!confirm(`지금 저장 폴더: ${dir ? dir.name : '-'}\n다른 폴더로 바꿀까요? (지금 폴더의 파일은 그대로 남아요)`)) return;
+    pickDir();
+  };
 
   /* ── 📲 설치 ── */
   let dp = null;
@@ -461,18 +527,17 @@ td.full{animation:full .45s ease-out}
   $('#bInst').onclick = async () => {
     if (dp) { dp.prompt(); await dp.userChoice; dp = null; return; }
     let had = false; try { had = navigator.getInstalledRelatedApps && (await navigator.getInstalledRelatedApps()).length > 0; } catch {}
-    alert(/iphone|ipad|ipod/i.test(navigator.userAgent) ? '아이폰: 사파리 아래 공유 버튼 → "홈 화면에 추가"를 누르세요.'
-      : (had ? 'PRPS가 이미 이 기기에 설치돼 있어요.\n' : '') + '지금은 바로 설치할 수 없어요.\n이미 깔려 있다면 기존 PRPS를 지우고(아이콘 꾹 → 제거) 이 페이지를 새로고침하면 설치 버튼이 동작해요.\n또는 크롬 메뉴(⋮) → "앱 설치"를 눌러도 돼요.');
+    alert((had ? 'PRPS가 이미 이 기기에 설치돼 있어요.\n' : '') + '지금은 바로 설치할 수 없어요.\n이미 깔려 있다면 기존 PRPS를 지우고 이 페이지를 새로고침하면 설치 버튼이 동작해요.\n또는 크롬 메뉴(⋮) → "앱 설치"를 눌러도 돼요.');
   };
 
   /* ── 시작 ── */
   window.addEventListener('pagehide', () => { if (dirty.size) push(); });
-  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (dirty.size) push(); } else if (doc && !dirty.size) pull(); });
-  window.addEventListener('online', () => { if (dirty.size) push(); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) { if (dirty.size) push(); } else reread(); });
+  window.addEventListener('focus', reread);
   let rw = innerWidth;
   window.addEventListener('resize', () => { if (innerWidth !== rw) { rw = innerWidth; growAll(); } });
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => doc && growAll());
-  show();
+  start();
   if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();
 </script>
