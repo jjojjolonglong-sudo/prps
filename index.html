@@ -107,8 +107,8 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
 .sk-poster .sb:hover{background:var(--line);color:var(--card)}
 .sk-poster .sb.danger:hover{background:var(--coral);border-color:var(--line);color:var(--ink)}
 .sk-poster .paper{background:var(--card) var(--grain);border:2px solid var(--line);box-shadow:8px 8px 0 var(--coral);padding:calc(var(--pm) - 2px)}
-/* 겉 이중선은 outline이라 표 크기·여백은 기본과 같음 */
-.sk-poster .sheet{outline:3px double var(--line);outline-offset:2px;color:var(--ink)}
+/* 겉선은 한 겹 + 파란 딱딱한 그림자(shsh 태그 블록처럼) — 표 크기·여백은 기본과 같음 */
+.sk-poster .sheet{color:var(--ink);box-shadow:3px 3px 0 var(--line);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sk-poster .sheet td.lab{color:var(--line);font-weight:700}
 .sk-poster .sheet td.head{color:var(--line);font-weight:800;letter-spacing:.06em}
 .sk-poster .fld::selection{background:#f5c3bf}
@@ -154,6 +154,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   .paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
   .sheet tr{break-inside:avoid}
   .sk-poster .paper{background:none;border:0;box-shadow:none;padding:0}
+  .sk-poster .sheet{box-shadow:none}
   .fld::placeholder{color:transparent}
 }
 </style>
