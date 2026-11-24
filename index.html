@@ -25,7 +25,7 @@ button{font:inherit;color:inherit;border-radius:0}
 /* ── 폴더 연결 화면 ── */
 #gate{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:16px}
 #gate .box{width:320px;max-width:100%;background:#fff;border:1px solid #c3ccd5;padding:28px 24px;text-align:center}
-#gate .brand{padding:0 0 18px}
+#gate .brand{padding:0 0 18px;justify-content:center}
 #gmsg{margin:0;font-size:13px;line-height:20px;color:var(--ink);word-break:keep-all}
 #gmsg small{display:block;margin-top:6px;font-size:12px;line-height:18px;color:var(--muted)}
 #gate .gb{display:block;width:100%;margin-top:18px;padding:9px;background:var(--ink);color:#fff;border:0;font-size:14px;cursor:pointer}
@@ -35,7 +35,7 @@ button{font:inherit;color:inherit;border-radius:0}
 #app{display:flex;height:100vh;height:100dvh}
 
 /* 좌측: 정보 + 메뉴 */
-#side{width:150px;flex:none;background:var(--side);border-right:1px solid var(--edge);display:flex;flex-direction:column;padding:16px 12px 8px}
+#side{width:184px;flex:none;background:var(--side);border-right:1px solid var(--edge);display:flex;flex-direction:column;padding:16px 12px 8px}
 .brand{font-weight:700;font-size:18px;letter-spacing:.16em;line-height:22px}
 .info{display:flex;flex-direction:column;align-items:flex-start}
 #docname{margin-top:12px;font-size:13px;line-height:18px;font-weight:600;word-break:keep-all;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;width:100%}
@@ -93,6 +93,36 @@ button{font:inherit;color:inherit;border-radius:0}
 .mclose{flex:none;border:0;border-top:1px solid var(--edge);background:var(--side);padding:12px;font-size:13px;cursor:pointer}
 .mclose:hover{color:var(--accent)}
 
+
+/* ── 스킨: 포스터 (shsh와 같은 색 — 회색기 핑크 벽, 미색 종이, 파란 잉크·선, 코랄 하트) ── */
+.brand{display:flex;align-items:center;gap:6px}
+.hrt{display:none;width:17px;height:17px;flex:none}
+body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:#e9e6cf;--edge:#2a60c6;--accent:#2a60c6;--warn:#d9545c;--head:#f8dcd8;--ph:#aab4d4;--card:#f4f2e3;--coral:#ef7f86;
+  --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .38 0 0 0 0 .78 0 0 0 .1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
+.sk-poster .hrt{display:block}
+.sk-poster .logo{font:900 21px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.03em;color:transparent;-webkit-text-stroke:1.2px var(--line)}
+.sk-poster #side{background:var(--side) var(--grain);border-right:1.5px solid var(--line)}
+.sk-poster #docname{color:var(--ink)}
+.sk-poster .sb{background:transparent;border:1.5px solid var(--line);color:var(--line);font-weight:600}
+.sk-poster .sb:hover{background:var(--line);color:var(--card)}
+.sk-poster .sb.danger:hover{background:var(--coral);border-color:var(--line);color:var(--ink)}
+.sk-poster .paper{background:var(--card) var(--grain);border:2px solid var(--line);box-shadow:8px 8px 0 var(--coral);padding:calc(var(--pm) - 2px)}
+/* 겉 이중선은 outline이라 표 크기·여백은 기본과 같음 */
+.sk-poster .sheet{outline:3px double var(--line);outline-offset:2px;color:var(--ink)}
+.sk-poster .sheet td.lab{color:var(--line);font-weight:700}
+.sk-poster .sheet td.head{color:var(--line);font-weight:800;letter-spacing:.06em}
+.sk-poster .fld::selection{background:#f5c3bf}
+.sk-poster #gate .box,.sk-poster .mbox{background:var(--card) var(--grain);border:2px solid var(--line);box-shadow:6px 6px 0 var(--coral)}
+.sk-poster #gate .gb{background:var(--line);color:var(--card);border:1.5px solid var(--line);font-weight:800;box-shadow:3px 3px 0 var(--coral)}
+.sk-poster #gate .gb.sub{background:transparent;color:var(--line);box-shadow:none}
+.sk-poster #q{background:var(--card);border-color:rgba(42,96,198,.45)}
+.sk-poster #list{border-top:1.5px solid var(--line)}
+.sk-poster #list li{border-bottom-color:rgba(42,96,198,.26)}
+.sk-poster #list li:hover{background:rgba(255,255,255,.42)}
+.sk-poster #list li.cur{border-left-color:var(--coral);background:#f8dcd8}
+.sk-poster #list .m{color:var(--muted)}
+.sk-poster .mclose{background:transparent;border-top:1.5px solid var(--line);color:var(--line);font-weight:600}
+
 /* 모바일: 위에 정보 한 줄 + 메뉴 버튼 */
 @media screen and (max-width:760px){
   #app{flex-direction:column}
@@ -123,6 +153,7 @@ button{font:inherit;color:inherit;border-radius:0}
   #scroll{display:block;overflow:visible;padding:0}
   .paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
   .sheet tr{break-inside:avoid}
+  .sk-poster .paper{background:none;border:0;box-shadow:none;padding:0}
   .fld::placeholder{color:transparent}
 }
 </style>
@@ -130,7 +161,7 @@ button{font:inherit;color:inherit;border-radius:0}
 <body>
 <div id="gate" hidden>
   <div class="box">
-    <div class="brand">PRPS</div>
+    <div class="brand"><span class="logo">PRPS</span><svg class="hrt" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2s-7.6-4.6-10-9.4C.3 8.4 2.3 3.8 6.3 3.8c2.3 0 4 1.3 5.7 3.5 1.7-2.2 3.4-3.5 5.7-3.5 4 0 6 4.6 4.3 8C19.6 16.6 12 21.2 12 21.2z" fill="#ef7f86" stroke="#2a60c6" stroke-width="1.1"/></svg></div>
     <p id="gmsg"></p>
     <button class="gb" id="gMain" hidden></button>
     <button class="gb sub" id="gSub" hidden></button>
@@ -140,7 +171,7 @@ button{font:inherit;color:inherit;border-radius:0}
 <div id="app" hidden>
   <aside id="side">
     <div class="info">
-      <div class="brand">PRPS</div>
+      <div class="brand"><span class="logo">PRPS</span><svg class="hrt" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21.2s-7.6-4.6-10-9.4C.3 8.4 2.3 3.8 6.3 3.8c2.3 0 4 1.3 5.7 3.5 1.7-2.2 3.4-3.5 5.7-3.5 4 0 6 4.6 4.3 8C19.6 16.6 12 21.2 12 21.2z" fill="#ef7f86" stroke="#2a60c6" stroke-width="1.1"/></svg></div>
       <div id="docname"></div>
       <div id="status"></div>
     </div>
@@ -157,6 +188,7 @@ button{font:inherit;color:inherit;border-radius:0}
     <div class="foot">
       <button class="iconbtn" id="bRefresh" title="새로고침" aria-label="새로고침"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><path d="M21 4v5h-5"/></svg></button>
       <button class="iconbtn" id="bDir" title="저장 폴더" aria-label="저장 폴더"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6.5V19h18V8.5h-9.5L9.5 6H3z"/></svg></button>
+      <button class="iconbtn" id="bSkin" title="스킨 바꾸기" aria-label="스킨 바꾸기"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 0 18c1.2 0 1.8-.8 1.8-1.7 0-1.2-1-1.6-1-2.6 0-.9.7-1.6 1.7-1.6H17a4 4 0 0 0 4-4C21 6.6 17 3 12 3z"/><circle cx="7.5" cy="11" r="1"/><circle cx="10" cy="7" r="1"/><circle cx="15" cy="7" r="1"/></svg></button>
       <button class="iconbtn" id="bInst" title="앱 설치" aria-label="앱 설치"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 4v11"/><path d="M7 10.5l5 5 5-5"/><path d="M4 20h16"/></svg></button>
     </div>
   </aside>
@@ -477,6 +509,22 @@ button{font:inherit;color:inherit;border-radius:0}
     if (dirty.size) await push();
     if (!confirm(`지금 저장 폴더: ${dir ? dir.name : '-'}\n다른 폴더로 바꿀까요? (지금 폴더의 파일은 그대로 남아요)`)) return;
     pickDir();
+  };
+
+  /* ── 스킨 (이 기기에 기억) ── */
+  const SKINS = [['basic','기본'], ['poster','포스터']];
+  function setSkin(k){
+    if (!SKINS.some(x => x[0] === k)) k = 'basic';
+    SKINS.forEach(x => document.body.classList.toggle('sk-' + x[0], x[0] === k));
+    lsS('skin', k);
+    document.querySelector('meta[name=theme-color]').content = k === 'poster' ? '#e9e6cf' : '#f6f8fa';
+    return k;
+  }
+  setSkin(lsG('skin') || 'basic');
+  $('#bSkin').onclick = () => {
+    const i = SKINS.findIndex(x => document.body.classList.contains('sk-' + x[0]));
+    const k = setSkin(SKINS[(i + 1) % SKINS.length][0]);
+    if (doc) note('스킨: ' + SKINS.find(x => x[0] === k)[1]);
   };
 
   /* ── 📲 설치 ── */
