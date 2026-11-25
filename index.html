@@ -288,12 +288,15 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   const recent = () => docs.slice().sort((a, b) => T(b.updated_at) - T(a.updated_at));
   const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); return o; };
 
+  /* 폴더(특히 구글 드라이브)가 응답하지 않을 때 끝없이 기다리지 않게: 정해진 시간이 지나면 포기 */
+  const limit = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error('timeout'), {name:'TimeoutError'})), ms))]);
   async function readAll(){
     const byId = new Map();
-    for await (const [name, fh] of dir.entries()) {
-      if (fh.kind !== 'file' || !/\.json$/i.test(name)) continue;
+    const names = [];
+    await limit((async () => { for await (const [name, fh] of dir.entries()) { if (fh.kind === 'file' && /\.json$/i.test(name)) names.push([name, fh]); } })(), 15000);
+    for (const [name, fh] of names) {
       try {
-        const j = JSON.parse(await (await fh.getFile()).text());
+        const j = JSON.parse(await limit(fh.getFile().then(f => f.text()), 6000));   // 한 파일이 6초 넘게 안 열리면 그 파일만 건너뜀
         if (!j || j.app !== 'prps' || !j.id) continue;      // 내보내기 묶음 파일 등은 건너뜀
         const d = norm(j); d._file = name;
         const o = byId.get(d.id);
@@ -351,7 +354,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
       if (!cur) openStart();
       else if (cur !== doc) { if (T(cur.updated_at) > T(doc.updated_at)) loadDoc(cur, true); else { cur._file = cur._file || doc._file; doc = cur; } }
       refreshStatus();
-    } catch (e) { if (e.name === 'NotAllowedError') lost(); }
+    } catch (e) { if (e.name === 'NotAllowedError') lost(); else console.warn(e); }
   }
 
   /* ── 문서 열기 ── */
@@ -388,7 +391,8 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     });
   });
 
-  /* ── 메뉴 ── */
+  /* ── 메뉴 ── (불러오기 전에 눌러도 오류 안 나게) */
+  ['#bNew','#bCopy','#bDel','#bPrint','#bExport','#bImport','#bOpen'].forEach(id => $(id).addEventListener('click', e => { if (!doc) { e.stopImmediatePropagation(); note('아직 불러오는 중이에요'); } }, true));
   $('#bNew').onclick = () => {
     if (isEmpty(doc)) { ed.title.focus(); note('빈 기획서가 이미 열려 있어요'); return; }
     if (!doc._file) docs = docs.filter(x => x !== doc);
@@ -483,6 +487,11 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     await idb.set('dir', h).catch(() => {});
     await useDir(h);
   }
+  function stuck(h){
+    dir = null;
+    gate(`저장 폴더 <b>${esc(h.name)}</b>가 응답하지 않아요.<small>구글 드라이브(PC용)가 켜져 있고 동기화가 끝났는지 확인한 뒤 다시 시도해 주세요.</small>`,
+      ['다시 시도', () => useDir(h)], ['다른 폴더 고르기', pickDir]);
+  }
   function lost(){
     dir = null;
     gate('저장 폴더에 쓸 권한이 꺼졌어요.<small>아래 버튼을 눌러 다시 허락해 주세요.</small>', ['폴더 다시 열기', start], ['다른 폴더 고르기', pickDir]);
@@ -492,7 +501,12 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     $('#bDir').title = '저장 폴더: ' + h.name + ' (눌러서 바꾸기)';
     $('#gate').hidden = true; $('#app').hidden = false;
     setStatus('불러오는 중…');
-    try { docs = await readAll(); } catch (e) { console.warn(e); return lost(); }
+    try { docs = await readAll(); }
+    catch (e) {
+      console.warn(e);
+      if (e.name === 'TimeoutError') return stuck(h);
+      return lost();
+    }
     doc = null; openStart();
     if (dirty.size) schedule(100);
   }
@@ -500,8 +514,8 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     if (typeof window.showDirectoryPicker !== 'function') {
       return gate('PRPS는 기획서를 PC 폴더에 파일로 저장해요.<small>PC의 크롬이나 엣지에서 열어 주세요.<br>휴대폰·이 브라우저에서는 폴더를 쓸 수 없어요.</small>');
     }
-    const h = await idb.get('dir').catch(() => null);
-    if (h && await perm(h, false).catch(() => false)) return useDir(h);
+    const h = await limit(idb.get('dir'), 5000).catch(() => null);
+    if (h && await limit(perm(h, false), 5000).catch(() => false)) return useDir(h);
     if (h) return gate(`저장 폴더 <b>${esc(h.name)}</b>를 다시 열어요.<small>브라우저가 폴더 사용을 물으면 허용을 눌러 주세요.<br>('방문할 때마다 허용'을 고르면 다음부터는 바로 열려요.)</small>`,
       ['폴더 열기', async () => { if (await perm(h, true).catch(() => false)) useDir(h); }], ['다른 폴더 고르기', pickDir]);
     gate('기획서를 저장할 폴더를 골라 주세요.<small>기획서마다 날짜_시각 이름의 파일이 생겨요.<br>구글 드라이브 폴더를 고르면 PC끼리 자동으로 맞춰져요.</small>', ['폴더 고르기', pickDir]);
