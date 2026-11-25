@@ -14,7 +14,7 @@
 :root{
   --ink:#1b1f24; --line:#000; --muted:#7a8591; --bg:#e9edf1; --side:#f6f8fa; --edge:#d5dbe1;
   --accent:#3d6a9a; --warn:#c0392b; --head:#f3f4f5; --ph:#c8cfd6; --labbg:#fafbfc;
-  --fs:13px; --lh:20px; --tbl:680px; --lab:76px; --cola:222px; --pageh:1122px; --pm:57px;
+  --fs:13px; --lh:20px; --tbl:680px; --lab:76px; --cola:264px; --pageh:1122px; --pm:57px;
 }
 *{box-sizing:border-box}
 html,body{margin:0;height:100%;overscroll-behavior:none}
@@ -69,8 +69,8 @@ button{font:inherit;color:inherit;border-radius:0}
 .addrow{display:block;margin:10px 0 0 auto;background:none;border:1px dashed var(--line);color:var(--muted);font-size:12px;line-height:16px;padding:4px 10px;cursor:pointer}
 .addrow:hover{color:var(--accent);border-color:var(--accent);border-style:solid}
 .sheet td.sn{position:relative}
-.xrow{position:absolute;right:3px;top:7px;width:16px;height:16px;padding:0;display:grid;place-items:center;background:none;border:0;color:var(--muted);cursor:pointer;opacity:0}
-.sheet tr:hover .xrow,.xrow:focus-visible{opacity:1}
+.xrow{position:absolute;left:-26px;top:7px;width:16px;height:16px;padding:0;display:grid;place-items:center;background:none;border:0;color:var(--muted);cursor:pointer;opacity:0}
+.sheet tr:hover .xrow,.xrow:focus-visible,.sheet td.sn:focus-within .xrow{opacity:1}
 .xrow:hover{color:var(--warn)}
 @media (hover:none){.xrow{opacity:.7}}
 .sheet td.head{text-align:center;vertical-align:middle;height:31px;padding:0 8px;background:var(--head);-webkit-print-color-adjust:exact;print-color-adjust:exact}
@@ -78,6 +78,7 @@ button{font:inherit;color:inherit;border-radius:0}
   font:inherit;line-height:var(--lh);resize:none;overflow:hidden;
   white-space:pre-wrap;word-break:break-all;overflow-wrap:anywhere;text-align:justify;text-justify:inter-character;
   min-height:var(--lh);height:var(--lh)}
+.fld.pv{display:none}
 .fld.center{text-align:center;text-justify:auto}
 .fld::placeholder{color:var(--ph);font-style:italic;opacity:1}
 
@@ -154,7 +155,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   .sheet.live td.lab,.sheet.live td.name{padding:5px 8px;text-align:justify}
   .sheet.live td.name .fld.center{text-align:justify}
   .sheet.live td.sn{padding-right:28px}
-  .xrow{right:6px}
+  .xrow{left:auto;right:6px}
   .sheet.live td.head{height:auto;line-height:20px;padding:5px 8px}
   /* 제목 | 장르 → 위 줄 칸 이름, 아래 줄 내용 */
   .sheet.live tr.tg{display:grid;grid-template-columns:1fr 1fr}
@@ -176,7 +177,8 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   #side,#gate,.modal,.addrow,.xrow{display:none!important}
   #scroll{display:block;overflow:visible;padding:0}
   .paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
-  .sheet tr{break-inside:avoid}
+  textarea.fld{display:none!important}
+  .fld.pv{display:block!important;height:auto!important;min-height:var(--lh)}
   .sk-poster .paper{background:none}
   .sk-poster .sheet{box-shadow:none}
   .fld::placeholder{color:transparent}
@@ -277,28 +279,34 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
 
   /* ── 시놉시스 칸: 기본 한 칸, 마음대로 추가·삭제 ── */
   const synBody = $('#syn');
+  const SE = () => ({t:'', v:''});
+  const synEmpty = x => !(x.t || '').trim() && !(x.v || '').trim();
   function renderSyn(){
-    const list = doc.syn && doc.syn.length ? doc.syn : (doc.syn = ['']);
-    synBody.innerHTML = list.map((v, i) => `<tr><td class="lab sn"><span>${i + 1}</span><button class="xrow" type="button" data-i="${i}" title="이 칸 지우기" aria-label="${i + 1}번 칸 지우기"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td><td colspan="3"><textarea class="fld" data-s="${i}" rows="1" spellcheck="false"></textarea></td></tr>`).join('');
-    synBody.querySelectorAll('.fld').forEach(el => { el.value = list[+el.dataset.s] || ''; grow(el); });
+    const list = doc.syn && doc.syn.length ? doc.syn : (doc.syn = [SE()]);
+    synBody.innerHTML = list.map((x, i) => `<tr><td class="name sn"><textarea class="fld center" data-s="${i}" data-k="t" rows="1" placeholder="제목" spellcheck="false"></textarea><button class="xrow" type="button" data-i="${i}" title="이 칸 지우기" aria-label="이 칸 지우기"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td><td colspan="3"><textarea class="fld" data-s="${i}" data-k="v" rows="1" spellcheck="false"></textarea></td></tr>`).join('');
+    synBody.querySelectorAll('.fld').forEach(el => { el.value = list[+el.dataset.s][el.dataset.k] || ''; grow(el); });
   }
   synBody.addEventListener('input', e => {
     const el = e.target.closest('.fld'); if (!el || !doc) return;
-    doc.syn[+el.dataset.s] = el.value; grow(el); touch(doc);
+    if (el.dataset.k === 't' && /\n/.test(el.value)) el.value = el.value.replace(/\r?\n/g, ' ');
+    doc.syn[+el.dataset.s][el.dataset.k] = el.value; grow(el); touch(doc);
+  });
+  synBody.addEventListener('keydown', e => {   // 제목 칸에서 엔터 = 내용 칸으로
+    const el = e.target.closest('.fld[data-k="t"]');
+    if (el && e.key === 'Enter' && !e.isComposing) { e.preventDefault(); el.closest('tr').querySelector('.fld[data-k="v"]').focus(); }
   });
   synBody.addEventListener('click', e => {
     const b = e.target.closest('.xrow'); if (!b || !doc) return;
-    const i = +b.dataset.i;
-    if (doc.syn.length === 1) { if (doc.syn[0] && confirm('이 칸의 내용을 지울까요?')) { doc.syn[0] = ''; renderSyn(); touch(doc); } return; }
-    if ((doc.syn[i] || '').trim() && !confirm(`${i + 1}번 칸을 지울까요?`)) return;
+    const i = +b.dataset.i, x = doc.syn[i];
+    if (doc.syn.length === 1) { if (!synEmpty(x) && confirm('이 칸의 내용을 지울까요?')) { doc.syn[0] = SE(); renderSyn(); touch(doc); } return; }
+    if (!synEmpty(x) && !confirm(`'${(x.t || '').trim() || '제목 없는'}' 칸을 지울까요?`)) return;
     doc.syn.splice(i, 1); renderSyn(); touch(doc);
   });
   $('#bAddSyn').onclick = () => {
     if (!doc) return;
-    doc.syn.push(''); renderSyn(); touch(doc);
+    doc.syn.push(SE()); renderSyn(); touch(doc);
     const last = synBody.querySelector('tr:last-child .fld'); last && last.focus();
   };
-
   /* ── 이 기기 작은 설정 ── */
   const lsG = k => { try { return JSON.parse(localStorage.getItem(PX + k) || 'null'); } catch { return null; } };
   const lsS = (k, v) => { try { localStorage.setItem(PX + k, JSON.stringify(v)); } catch {} };
@@ -326,19 +334,20 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   const T = s => Date.parse(s) || 0;
   const iso = v => typeof v === 'number' ? new Date(v).toISOString() : (T(v) ? new Date(T(v)).toISOString() : now());
   const isId = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now(), syn: ['']}; KEYS.forEach(k => d[k] = ''); return d; }
+  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now(), syn: [{t:'', v:''}]}; KEYS.forEach(k => d[k] = ''); return d; }
   const OLD = {c1_name:'c1n', c2_name:'c2n', c3_name:'c3n'};   // 처음 판(c1n …) 파일도 읽기
   function norm(x){
     const d = blank();
     KEYS.forEach(k => { const v = x[k] ?? x[OLD[k]]; d[k] = typeof v === 'string' ? v : ''; });
     d.id = isId(String(x.id || '')) ? String(x.id) : uuid();
     d.created_at = iso(x.created_at ?? x.created); d.updated_at = iso(x.updated_at ?? x.updated);
-    d.syn = Array.isArray(x.syn) && x.syn.length ? x.syn.map(v => typeof v === 'string' ? v : '') : [''];   // 시놉시스 칸들(개수 자유)
+    // 시놉시스 칸들(개수 자유) — {t:제목, v:내용}. 잠깐 쓰인 글자만 있던 판도 읽기
+    d.syn = Array.isArray(x.syn) && x.syn.length ? x.syn.map(v => typeof v === 'string' ? {t:'', v} : {t: typeof v?.t === 'string' ? v.t : '', v: typeof v?.v === 'string' ? v.v : ''}) : [{t:'', v:''}];
     return d;
   }
-  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim()) && (d.syn || []).every(v => !v.trim());
+  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim()) && (d.syn || []).every(x => !(x.t || '').trim() && !(x.v || '').trim());
   const recent = () => docs.slice().sort((a, b) => T(b.updated_at) - T(a.updated_at));
-  const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); o.syn = (d.syn && d.syn.length ? d.syn : ['']).slice(); return o; };
+  const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); o.syn = (d.syn && d.syn.length ? d.syn : [{t:'', v:''}]).map(x => ({t: x.t || '', v: x.v || ''})); return o; };
 
   /* 폴더(특히 구글 드라이브)가 응답하지 않을 때 끝없이 기다리지 않게: 정해진 시간이 지나면 포기 */
   const limit = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error('timeout'), {name:'TimeoutError'})), ms))]);
@@ -465,7 +474,16 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     doc = null; openStart();
   };
   $('#bPrint').onclick = () => window.print();
-  addEventListener('beforeprint', () => { if (doc) document.title = fname(doc.created_at); });   // Ctrl+P로 인쇄해도 같은 파일명
+  addEventListener('beforeprint', () => {
+    if (!doc) return;
+    document.title = fname(doc.created_at);   // Ctrl+P로 인쇄해도 같은 파일명
+    // 입력 칸(textarea)은 쪽 사이에서 잘리지 않아서, 인쇄할 땐 같은 글자를 담은 상자로 바꿔 줄 단위로 넘어가게
+    document.querySelectorAll('.sheet textarea.fld').forEach(t => {
+      let d = t.nextElementSibling;
+      if (!d || !d.classList.contains('pv')) { d = document.createElement('div'); t.after(d); }
+      d.className = t.className + ' pv'; d.textContent = t.value;
+    });
+  });
   $('#bRefresh').onclick = async () => { if (dirty.size) await push(); location.reload(); };
 
   /* 내보내기 · 가져오기 */
