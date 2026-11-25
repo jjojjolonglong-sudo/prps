@@ -66,6 +66,13 @@ button{font:inherit;color:inherit;border-radius:0}
 .sheet td{border:1px solid var(--line);padding:5px 8px;vertical-align:top}
 .sheet td.lab{text-align:center;padding:5px 4px;white-space:nowrap}
 .sheet td.name{padding:5px 4px}
+.addrow{display:block;margin:10px 0 0 auto;background:none;border:1px dashed var(--line);color:var(--muted);font-size:12px;line-height:16px;padding:4px 10px;cursor:pointer}
+.addrow:hover{color:var(--accent);border-color:var(--accent);border-style:solid}
+.sheet td.sn{position:relative}
+.xrow{position:absolute;right:3px;top:7px;width:16px;height:16px;padding:0;display:grid;place-items:center;background:none;border:0;color:var(--muted);cursor:pointer;opacity:0}
+.sheet tr:hover .xrow,.xrow:focus-visible{opacity:1}
+.xrow:hover{color:var(--warn)}
+@media (hover:none){.xrow{opacity:.7}}
 .sheet td.head{text-align:center;vertical-align:middle;height:31px;padding:0 8px;background:var(--head);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .fld{display:block;width:100%;margin:0;padding:0;border:0;outline:0;background:transparent;color:inherit;
   font:inherit;line-height:var(--lh);resize:none;overflow:hidden;
@@ -143,8 +150,11 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   .sheet.live colgroup{display:none}
   .sheet.live tbody,.sheet.live tr{display:block}
   .sheet.live td{display:block;border:0;border-bottom:1px solid var(--line);padding:5px 8px}
-  .sheet.live tr:last-child td:last-child{border-bottom:0}
-  .sheet.live td.lab,.sheet.live td.name{padding:5px 8px;background:var(--labbg)}
+  .sheet.live tbody:last-of-type tr:last-child td:last-child{border-bottom:0}
+  .sheet.live td.lab,.sheet.live td.name{padding:5px 8px;text-align:justify}
+  .sheet.live td.name .fld.center{text-align:justify}
+  .sheet.live td.sn{padding-right:28px}
+  .xrow{right:6px}
   .sheet.live td.head{height:auto;line-height:20px;padding:5px 8px}
   /* 제목 | 장르 → 위 줄 칸 이름, 아래 줄 내용 */
   .sheet.live tr.tg{display:grid;grid-template-columns:1fr 1fr}
@@ -163,7 +173,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   @page{size:A4;margin:var(--pm)}
   html,body{height:auto;overflow:visible;background:#fff}
   #app{display:block;height:auto}
-  #side,#gate,.modal{display:none!important}
+  #side,#gate,.modal,.addrow,.xrow{display:none!important}
   #scroll{display:block;overflow:visible;padding:0}
   .paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
   .sheet tr{break-inside:avoid}
@@ -246,21 +256,48 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     const row = (label, k) => `<tr><td class="lab">${label}</td><td colspan="3">${F(k)}</td></tr>`;
     const chr = n => `<tr><td class="name">${F('c'+n+'_name','center')}</td><td colspan="3">${F('c'+n)}</td></tr>`;
     const head = t => `<tr><td colspan="4" class="head">${t}</td></tr>`;
-    return `<table class="sheet live">
+    return `<table class="sheet live"><tbody>
       <colgroup><col class="c-lab"><col class="c-a"><col class="c-lab"><col></colgroup>
       ${head('단편 소설 기획서')}
       <tr class="tg"><td class="lab">제목</td><td>${F('title')}</td><td class="lab">장르</td><td>${F('genre')}</td></tr>
       ${row('기획의도','intent')}${row('키워드','keywords')}${row('로그라인','logline')}${row('소개글','intro')}
       ${head('등장인물')}${chr(1)}${chr(2)}${chr(3)}
-      ${head('시놉시스')}${row('기','ki')}${row('승','seung')}${row('전','jeon')}${row('결','gyeol')}
-    </table>`;
+      ${head('기승전결')}${row('기','ki')}${row('승','seung')}${row('전','jeon')}${row('결','gyeol')}
+      ${head('시놉시스')}</tbody>
+      <tbody id="syn"></tbody>
+    </table>
+    <button class="addrow" id="bAddSyn" type="button">+ 시놉시스 칸 추가</button>`;
   }
   $('#paper').innerHTML = sheetHTML();
   const ed = {};
   document.querySelectorAll('.sheet.live .fld').forEach(el => ed[el.dataset.f] = el);
 
   function grow(el){ el.style.height = 'auto'; el.style.height = Math.max(el.scrollHeight, LH) + 'px'; }
-  const growAll = () => KEYS.forEach(k => grow(ed[k]));
+  const growAll = () => { KEYS.forEach(k => grow(ed[k])); document.querySelectorAll('#syn .fld').forEach(grow); };
+
+  /* ── 시놉시스 칸: 기본 한 칸, 마음대로 추가·삭제 ── */
+  const synBody = $('#syn');
+  function renderSyn(){
+    const list = doc.syn && doc.syn.length ? doc.syn : (doc.syn = ['']);
+    synBody.innerHTML = list.map((v, i) => `<tr><td class="lab sn"><span>${i + 1}</span><button class="xrow" type="button" data-i="${i}" title="이 칸 지우기" aria-label="${i + 1}번 칸 지우기"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button></td><td colspan="3"><textarea class="fld" data-s="${i}" rows="1" spellcheck="false"></textarea></td></tr>`).join('');
+    synBody.querySelectorAll('.fld').forEach(el => { el.value = list[+el.dataset.s] || ''; grow(el); });
+  }
+  synBody.addEventListener('input', e => {
+    const el = e.target.closest('.fld'); if (!el || !doc) return;
+    doc.syn[+el.dataset.s] = el.value; grow(el); touch(doc);
+  });
+  synBody.addEventListener('click', e => {
+    const b = e.target.closest('.xrow'); if (!b || !doc) return;
+    const i = +b.dataset.i;
+    if (doc.syn.length === 1) { if (doc.syn[0] && confirm('이 칸의 내용을 지울까요?')) { doc.syn[0] = ''; renderSyn(); touch(doc); } return; }
+    if ((doc.syn[i] || '').trim() && !confirm(`${i + 1}번 칸을 지울까요?`)) return;
+    doc.syn.splice(i, 1); renderSyn(); touch(doc);
+  });
+  $('#bAddSyn').onclick = () => {
+    if (!doc) return;
+    doc.syn.push(''); renderSyn(); touch(doc);
+    const last = synBody.querySelector('tr:last-child .fld'); last && last.focus();
+  };
 
   /* ── 이 기기 작은 설정 ── */
   const lsG = k => { try { return JSON.parse(localStorage.getItem(PX + k) || 'null'); } catch { return null; } };
@@ -289,18 +326,19 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   const T = s => Date.parse(s) || 0;
   const iso = v => typeof v === 'number' ? new Date(v).toISOString() : (T(v) ? new Date(T(v)).toISOString() : now());
   const isId = s => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now()}; KEYS.forEach(k => d[k] = ''); return d; }
+  function blank(){ const d = {id: uuid(), created_at: now(), updated_at: now(), syn: ['']}; KEYS.forEach(k => d[k] = ''); return d; }
   const OLD = {c1_name:'c1n', c2_name:'c2n', c3_name:'c3n'};   // 처음 판(c1n …) 파일도 읽기
   function norm(x){
     const d = blank();
     KEYS.forEach(k => { const v = x[k] ?? x[OLD[k]]; d[k] = typeof v === 'string' ? v : ''; });
     d.id = isId(String(x.id || '')) ? String(x.id) : uuid();
     d.created_at = iso(x.created_at ?? x.created); d.updated_at = iso(x.updated_at ?? x.updated);
+    d.syn = Array.isArray(x.syn) && x.syn.length ? x.syn.map(v => typeof v === 'string' ? v : '') : [''];   // 시놉시스 칸들(개수 자유)
     return d;
   }
-  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim());
+  const isEmpty = d => KEYS.every(k => !(d[k] || '').trim()) && (d.syn || []).every(v => !v.trim());
   const recent = () => docs.slice().sort((a, b) => T(b.updated_at) - T(a.updated_at));
-  const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); return o; };
+  const row = d => { const o = {id: d.id, created_at: d.created_at, updated_at: d.updated_at}; KEYS.forEach(k => o[k] = d[k] || ''); o.syn = (d.syn && d.syn.length ? d.syn : ['']).slice(); return o; };
 
   /* 폴더(특히 구글 드라이브)가 응답하지 않을 때 끝없이 기다리지 않게: 정해진 시간이 지나면 포기 */
   const limit = (p, ms) => Promise.race([p, new Promise((_, no) => setTimeout(() => no(Object.assign(new Error('timeout'), {name:'TimeoutError'})), ms))]);
@@ -377,6 +415,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     doc = d;
     document.title = fname(d.created_at);   // 탭 이름·PDF 파일명 = 기획서를 만든 날짜_시각
     KEYS.forEach(k => ed[k].value = d[k] || '');
+    renderSyn();
     showName(); growAll(); refreshStatus(); lsS('cur', d.id);
     if (!keepScroll) $('#scroll').scrollTop = 0;
   }
