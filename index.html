@@ -13,7 +13,7 @@
 /* PRPS — 단편 소설 기획서. 한글 양식 그대로 A4 한 장. 차가운 회색·옅은 푸른색, 각진 모서리, 1px 선 */
 :root{
   --ink:#1b1f24; --line:#000; --muted:#7a8591; --bg:#e9edf1; --side:#f6f8fa; --edge:#d5dbe1;
-  --accent:#3d6a9a; --warn:#c0392b; --head:#f3f4f5; --ph:#c8cfd6;
+  --accent:#3d6a9a; --warn:#c0392b; --head:#f3f4f5; --ph:#c8cfd6; --labbg:#fafbfc;
   --fs:13px; --lh:20px; --tbl:680px; --lab:76px; --cola:222px; --pageh:1122px; --pm:57px;
 }
 *{box-sizing:border-box}
@@ -97,7 +97,7 @@ button{font:inherit;color:inherit;border-radius:0}
 /* ── 스킨: 포스터 (shsh와 같은 색 — 회색기 핑크 벽, 미색 종이, 파란 잉크·선, 코랄 하트) ── */
 .brand{display:flex;align-items:center;gap:6px}
 .hrt{display:none;width:17px;height:17px;flex:none}
-body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:#e9e6cf;--edge:#2a60c6;--accent:#2a60c6;--warn:#d9545c;--head:#f8dcd8;--ph:#aab4d4;--card:#f4f2e3;--coral:#ef7f86;
+body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:#e9e6cf;--edge:#2a60c6;--accent:#2a60c6;--warn:#d9545c;--head:#f8dcd8;--ph:#aab4d4;--labbg:rgba(255,255,255,.45);--card:#f4f2e3;--coral:#ef7f86;--coral2:#e05d68;
   --grain:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .16 0 0 0 0 .38 0 0 0 0 .78 0 0 0 .1 0'/></filter><rect width='100%25' height='100%25' filter='url(%23n)'/></svg>")}
 .sk-poster .hrt{display:block}
 .sk-poster .logo{font:900 21px/1 'Arial Black','Helvetica Neue',system-ui,sans-serif;letter-spacing:.03em;color:transparent;-webkit-text-stroke:1.2px var(--line)}
@@ -106,9 +106,10 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
 .sk-poster .sb{background:transparent;border:1.5px solid var(--line);color:var(--line);font-weight:600}
 .sk-poster .sb:hover{background:var(--line);color:var(--card)}
 .sk-poster .sb.danger:hover{background:var(--coral);border-color:var(--line);color:var(--ink)}
-.sk-poster .paper{background:var(--card) var(--grain);border:2px solid var(--line);box-shadow:8px 8px 0 var(--coral);padding:calc(var(--pm) - 2px)}
+/* 종이는 바탕색만(기본 스킨과 같은 구조), 효과는 표 겉선에 */
+.sk-poster .paper{background:var(--card)}
 /* 겉선은 한 겹 + 파란 딱딱한 그림자(shsh 태그 블록처럼) — 표 크기·여백은 기본과 같음 */
-.sk-poster .sheet{color:var(--ink);box-shadow:3px 3px 0 var(--line);-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.sk-poster .sheet{color:var(--ink);border:2px solid var(--line);box-shadow:6px 6px 0 var(--coral2);-webkit-print-color-adjust:exact;print-color-adjust:exact}
 .sk-poster .sheet td.lab{color:var(--line);font-weight:700}
 .sk-poster .sheet td.head{color:var(--line);font-weight:800;letter-spacing:.06em}
 .sk-poster .fld::selection{background:#f5c3bf}
@@ -136,12 +137,25 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   .spacer{display:none}
   .sb{width:auto;flex:none;padding:5px 9px;font-size:12px}
   #scroll{padding:10px 8px 48px}
-  .paper{width:auto;min-height:0;padding:14px 10px}
-  .sheet.live{width:100%}
-  .sheet.live col.c-lab{width:54px}
-  .sheet.live col.c-a{width:auto}
-  .sheet.live td{padding:5px 6px}
-  .sheet.live td.lab,.sheet.live td.name{padding:5px 2px;white-space:normal;word-break:keep-all}
+  .paper{width:auto;min-height:0;padding:12px}
+  /* 칸 이름을 내용 위로 쌓기: 표를 세로 블록으로 */
+  .sheet.live{display:block;width:auto;border:1px solid var(--line)}
+  .sheet.live colgroup{display:none}
+  .sheet.live tbody,.sheet.live tr{display:block}
+  .sheet.live td{display:block;border:0;border-bottom:1px solid var(--line);padding:5px 8px}
+  .sheet.live tr:last-child td:last-child{border-bottom:0}
+  .sheet.live td.lab,.sheet.live td.name{padding:5px 8px;background:var(--labbg)}
+  .sheet.live td.head{height:auto;line-height:20px;padding:5px 8px}
+  /* 제목 | 장르 → 위 줄 칸 이름, 아래 줄 내용 */
+  .sheet.live tr.tg{display:grid;grid-template-columns:1fr 1fr}
+  .sheet.live tr.tg td:nth-child(1){grid-area:1/1}
+  .sheet.live tr.tg td:nth-child(2){grid-area:2/1}
+  .sheet.live tr.tg td:nth-child(3){grid-area:1/2}
+  .sheet.live tr.tg td:nth-child(4){grid-area:2/2}
+  .sheet.live tr.tg td:nth-child(odd){border-right:1px solid var(--line)}
+  .sheet.live tr.tg td:nth-child(3),.sheet.live tr.tg td:nth-child(4){border-right:0}
+  .sheet.live tr.tg td:nth-child(1),.sheet.live tr.tg td:nth-child(2){border-right:1px solid var(--line)}
+  .sk-poster .sheet.live{border-width:2px;margin:0 6px 6px 0}   /* 그림자 자리 */
 }
 
 /* 인쇄 / PDF: A4, 네 변 여백 57px(길면 다음 장도 같은 여백) */
@@ -153,7 +167,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
   #scroll{display:block;overflow:visible;padding:0}
   .paper{width:auto;min-height:0;margin:0;padding:0;box-shadow:none}
   .sheet tr{break-inside:avoid}
-  .sk-poster .paper{background:none;border:0;box-shadow:none;padding:0}
+  .sk-poster .paper{background:none}
   .sk-poster .sheet{box-shadow:none}
   .fld::placeholder{color:transparent}
 }
@@ -235,7 +249,7 @@ body.sk-poster{--ink:#1c3a80;--line:#2a60c6;--muted:#7584ad;--bg:#d1b6ad;--side:
     return `<table class="sheet live">
       <colgroup><col class="c-lab"><col class="c-a"><col class="c-lab"><col></colgroup>
       ${head('단편 소설 기획서')}
-      <tr><td class="lab">제목</td><td>${F('title')}</td><td class="lab">장르</td><td>${F('genre')}</td></tr>
+      <tr class="tg"><td class="lab">제목</td><td>${F('title')}</td><td class="lab">장르</td><td>${F('genre')}</td></tr>
       ${row('기획의도','intent')}${row('키워드','keywords')}${row('로그라인','logline')}${row('소개글','intro')}
       ${head('등장인물')}${chr(1)}${chr(2)}${chr(3)}
       ${head('시놉시스')}${row('기','ki')}${row('승','seung')}${row('전','jeon')}${row('결','gyeol')}
